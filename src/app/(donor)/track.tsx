@@ -30,9 +30,17 @@ export default function DonorTrack() {
   const s = useApp();
   const a = s.allocation;
 
+  // Back from the track/waiting screen jumps straight home — the donation has
+  // already been sent, so popping back into the category/form/nearby flow is
+  // the wrong place to land. dismissAll() drops the whole donate sub-flow.
+  const goHome = () => {
+    if (router.canDismiss()) router.dismissAll();
+    else router.replace('/(donor)/home');
+  };
+
   if (!a) {
     return (
-      <Page header={<AppBar title="Track donation" onBack={() => router.back()} />}>
+      <Page header={<AppBar title="Track donation" onBack={goHome} />}>
         <Text variant="body" color={colors.textSecondary}>
           No active donation.
         </Text>
@@ -114,7 +122,7 @@ export default function DonorTrack() {
 
   return (
     <Page
-      header={<AppBar title="Track donation" onBack={() => router.back()} />}
+      header={<AppBar title="Track donation" onBack={goHome} />}
       footer={footer}
     >
       <View style={styles.headerCard}>
