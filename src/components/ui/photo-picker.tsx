@@ -1,11 +1,12 @@
 /**
- * PhotoPicker — gallery photo picker. Tap to choose an image via
- * expo-image-picker; calls onPick(uri) on success.
+ * PhotoPicker — photo capture/picker. Tap to either take a photo with the
+ * camera (for evidence that isn't already saved) or choose one from the
+ * gallery; calls onPick(uri) on success.
  * Ported from the design system kit `ui_kits/plenty-app/kit.jsx` (PhotoPicker).
  */
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
-import { Pressable, type StyleProp, View, type ViewStyle } from 'react-native';
+import { Alert, Pressable, type StyleProp, View, type ViewStyle } from 'react-native';
 
 import { colors, radius } from '@/theme';
 
@@ -39,19 +40,37 @@ export function PhotoPicker({
 }: PhotoPickerProps) {
   const br = shape === 'circle' ? size / 2 : radius.md;
 
-  const pick = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: 'images',
-      quality: 0.8,
-    });
+  const takePhoto = async () => {
+    const perm = await ImagePicker.requestCameraPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert('Camera access needed', 'Enable camera permission to take a photo.');
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({ mediaTypes: 'images', quality: 0.8 });
     if (!result.canceled && result.assets?.[0]?.uri) {
       onPick(result.assets[0].uri);
     }
   };
 
+  const pickFromGallery = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: 'images', quality: 0.8 });
+    if (!result.canceled && result.assets?.[0]?.uri) {
+      onPick(result.assets[0].uri);
+    }
+  };
+
+  // Let the user take a fresh photo (evidence not in the gallery) or pick one.
+  const choose = () => {
+    Alert.alert(label, undefined, [
+      { text: 'Take photo', onPress: takePhoto },
+      { text: 'Choose from gallery', onPress: pickFromGallery },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  };
+
   return (
     <Pressable
-      onPress={pick}
+      onPress={choose}
       accessibilityRole="button"
       accessibilityLabel={label}
       style={[

@@ -5,7 +5,7 @@
  */
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Alert, Pressable, ScrollView, View } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
@@ -26,7 +26,19 @@ export function ShelterImagesPicker({
 }) {
   const remaining = Math.max(0, max - value.length);
 
-  const add = async () => {
+  const takePhoto = async () => {
+    if (remaining === 0) return;
+    const perm = await ImagePicker.requestCameraPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert('Camera access needed', 'Enable camera permission to take a photo.');
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({ mediaTypes: 'images', quality: 0.8 });
+    if (result.canceled || !result.assets?.[0]?.uri) return;
+    onChange([...value, result.assets[0].uri].slice(0, max));
+  };
+
+  const pickFromGallery = async () => {
     if (remaining === 0) return;
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: 'images',
@@ -37,6 +49,15 @@ export function ShelterImagesPicker({
     if (result.canceled) return;
     const uris = result.assets.map((a) => a.uri);
     onChange([...value, ...uris].slice(0, max));
+  };
+
+  const add = () => {
+    if (remaining === 0) return;
+    Alert.alert('Add photos', undefined, [
+      { text: 'Take photo', onPress: takePhoto },
+      { text: 'Choose from gallery', onPress: pickFromGallery },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
   };
 
   const removeAt = (index: number) => onChange(value.filter((_, i) => i !== index));

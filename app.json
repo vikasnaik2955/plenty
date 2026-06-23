@@ -42,6 +42,13 @@
             "imageWidth": 76
           }
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Plenty needs camera access so you can take photos of donations and shelters.",
+          "photosPermission": "Plenty needs photo access so you can attach existing photos."
+        }
       ]
     ],
     "experiments": {
