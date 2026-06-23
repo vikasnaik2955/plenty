@@ -20,6 +20,19 @@ export function monthKey(ms: number = Date.now()): string {
   return `${d.getFullYear()}-${d.getMonth()}`;
 }
 
+/** Monday-00:00 epoch ms for the week containing `ms` — groups by week (streaks). */
+export function weekKey(ms: number = Date.now()): number {
+  const d = new Date(ms);
+  const offset = (d.getDay() + 6) % 7; // 0 = Monday … 6 = Sunday
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate() - offset).getTime();
+}
+
+/** "2026-Q2" key for the quarter containing `ms` — used to reset the grace week. */
+export function quarterKey(ms: number = Date.now()): string {
+  const d = new Date(ms);
+  return `${d.getFullYear()}-Q${Math.floor(d.getMonth() / 3) + 1}`;
+}
+
 /** Human month + year, e.g. "June 2026". */
 export function monthName(ms: number = Date.now()): string {
   const d = new Date(ms);

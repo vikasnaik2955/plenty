@@ -4,8 +4,8 @@
  * pickup/drop contacts, photo-proof updates, and an optional transport request.
  */
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Animated, Pressable, StyleSheet, View } from 'react-native';
 
 import { ProgressPhotos } from '@/components/progress-photos';
 import { TeamSection } from '@/components/team-section';
@@ -23,9 +23,10 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { Text } from '@/components/ui/text';
 import { Timeline } from '@/components/ui/timeline';
 import { useApp } from '@/store/app-store';
-import { colors, leading, radius, shadows, space } from '@/theme';
+import { colors, leading, palette, radius, shadows, space } from '@/theme';
 import { formatStamp } from '@/utils/datetime';
 import { callNumber, openDirections } from '@/utils/contact';
+import type { DeliveryReward } from '@/config/rewards';
 import type { Status, Transport } from '@/data/types';
 
 const NEXT: Record<string, Status> = {
@@ -58,6 +59,7 @@ export default function VolTask() {
   const [proofSheet, setProofSheet] = useState(false);
   const [photo, setPhoto] = useState<string | null>(null);
   const [transportSheet, setTransportSheet] = useState(false);
+  const [reward, setReward] = useState<DeliveryReward | null>(null);
 
   const back = () => router.back();
 
@@ -103,14 +105,26 @@ export default function VolTask() {
   };
   const confirmUpdate = () => {
     if (!photo) return;
+    const at = Date.now();
+    const nextProofs = { ...taskProofs, [n]: { uri: photo, at } };
     s.addProof(n, photo);
-    s.updateVolTask(t.id, { current: n, proofs: { ...taskProofs, [n]: { uri: photo, at: Date.now() } } });
+    s.updateVolTask(t.id, { current: n, proofs: nextProofs });
     setProofSheet(false);
     setPhoto(null);
-    s.showToast(
-      n === 'completed' ? '+45 points earned 🎉' : `Marked ${n.replace('_', ' ')} · photo saved`,
-      'success',
-    );
+    if (n === 'completed') {
+      // Real reward: points + streak + badges, with an itemized celebration.
+      const earned = s.awardDelivery({
+        title: t.title,
+        category: t.category,
+        distance: t.distance,
+        people: t.people,
+        proofs: nextProofs,
+        team: t.team,
+      });
+      setReward(earned);
+    } else {
+      s.showToast(`Marked ${n.replace('_', ' ')} · photo saved`, 'success');
+    }
   };
 
   return (
@@ -388,7 +402,107 @@ export default function VolTask() {
           accent={colors.brand}
         />
       </BottomSheet>
+
+      <BottomSheet
+        open={!!reward}
+        title="Delivery complete 🎉"
+        onClose={() => setReward(null)}
+        footer={
+          <Button
+            fullWidth
+            size="lg"
+            onPress={() => {
+              setReward(null);
+              back();
+            }}
+          >
+            Done
+          </Button>
+        }
+      >
+        {reward && <RewardCelebration reward={reward} />}
+      </BottomSheet>
     </Page>
+  );
+}
+
+function RewardCelebration({ reward }: { reward: DeliveryReward }) {
+  const pop = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    pop.setValue(0);
+    Animated.spring(pop, { toValue: 1, useNativeDriver: true, speed: 12, bounciness: 12 }).start();
+  }, [pop]);
+  const scale = pop.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1] });
+
+  return (
+    <View style={{ gap: space[3] }}>
+      <Animated.View style={[styles.celebrateTop, { opacity: pop, transform: [{ scale }] }]}>
+        <View style={styles.celebrateTrophy}>
+          <Icon name="award" size={34} color={palette.gold600} />
+        </View>
+        <Text size={34} weight={800} color={palette.gold600} style={{ lineHeight: 38 }}>
+          +{reward.total}
+        </Text>
+        <Text size={13} weight={700} color={colors.textSecondary}>
+          points earned
+        </Text>
+      </Animated.View>
+
+      {reward.newBadges.length > 0 && (
+        <View style={styles.celebrateBadges}>
+          {reward.newBadges.map((b) => (
+            <View key={b.id} style={styles.celebrateBadge}>
+              <Icon name={b.icon} size={18} color={palette.gold600} />
+              <Text size={13} weight={700} color={colors.textPrimary}>
+                {b.name} unlocked
+              </Text>
+            </View>
+          ))}
+        </View>
+      )}
+
+      <View style={styles.celebrateList}>
+        {reward.items.map((it, i) => (
+          <View
+            key={`${it.label}-${i}`}
+            style={[styles.celebrateRow, i < reward.items.length - 1 && styles.celebrateDivider]}
+          >
+            <Text size={13} weight={600} color={colors.textSecondary} style={{ flex: 1 }}>
+              {it.label}
+            </Text>
+            <Text size={13} weight={700} color={colors.textPrimary}>
+              +{it.points}
+            </Text>
+          </View>
+        ))}
+        {reward.multiplierBonus > 0 && (
+          <View style={[styles.celebrateRow, styles.celebrateDivider]}>
+            <Text size={13} weight={700} color={palette.orange600} style={{ flex: 1 }}>
+              🔥 {reward.weeklyStreak}-week streak · ×{reward.multiplier}
+            </Text>
+            <Text size={13} weight={800} color={palette.orange600}>
+              +{reward.multiplierBonus}
+            </Text>
+          </View>
+        )}
+        {reward.milestoneBonus > 0 && (
+          <View style={styles.celebrateRow}>
+            <Text size={13} weight={700} color={colors.brandStrong} style={{ flex: 1 }}>
+              🎯 {reward.milestoneLabel} bonus
+            </Text>
+            <Text size={13} weight={800} color={colors.brandStrong}>
+              +{reward.milestoneBonus}
+            </Text>
+          </View>
+        )}
+      </View>
+
+      {!reward.streakQualified && (
+        <Text size={12} color={colors.textMuted} align="center">
+          One more delivery this week unlocks the ×1.5 streak bonus.
+        </Text>
+      )}
+    </View>
   );
 }
 
@@ -667,4 +781,35 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     backgroundColor: colors.clothes,
   },
+  celebrateTop: { alignItems: 'center', gap: 4, paddingTop: space[1] },
+  celebrateTrophy: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: colors.rewardSoft,
+    borderWidth: 1.5,
+    borderColor: palette.gold300,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  celebrateBadges: { gap: 8 },
+  celebrateBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: radius.md,
+    backgroundColor: colors.rewardSoft,
+    borderWidth: 1,
+    borderColor: palette.gold300,
+  },
+  celebrateList: {
+    backgroundColor: colors.surfaceSunken,
+    borderRadius: radius.md,
+    paddingHorizontal: space[3],
+  },
+  celebrateRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 10 },
+  celebrateDivider: { borderBottomWidth: 1, borderBottomColor: colors.borderSubtle },
 });

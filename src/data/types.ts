@@ -288,6 +288,52 @@ export interface SavedAddress {
   isDefault?: boolean;
 }
 
+/** A row in the volunteer's points history ledger. */
+export interface VolLedgerEntry {
+  id: string;
+  reason: string;
+  /** Signed points change (positive earned, negative redeemed). */
+  delta: number;
+  at: number;
+  kind: 'earn' | 'bonus' | 'redeem';
+}
+
+/**
+ * The volunteer's rewards state. `lifetimePoints` only ever grows and drives the
+ * tier + point-threshold badges; `balance` is the spendable wallet that perks
+ * deduct from — so redeeming a perk never demotes the volunteer's tier.
+ */
+export interface VolRewards {
+  lifetimePoints: number;
+  balance: number;
+  // Counters that badges and stats read.
+  deliveriesCompleted: number;
+  peopleFed: number;
+  onTimePickups: number;
+  fullyDocumentedRuns: number;
+  totalDistanceKm: number;
+  foodDeliveries: number;
+  teammateRuns: number;
+  sheltersRegistered: number;
+  monsoonDeliveries: number;
+  // Weekly streak machinery.
+  deliveriesThisWeek: number;
+  currentWeekKey: number;
+  lastQualifiedWeekKey: number | null;
+  weeklyStreak: number;
+  longestWeeklyStreak: number;
+  /** Quarter key the once-per-quarter grace week was used in (null = unused). */
+  graceQuarterUsed: string | null;
+  /** Streak milestones already paid out (e.g. [4, 12]). */
+  milestonesAwarded: number[];
+  /** Unlocked badge ids. */
+  badges: string[];
+  /** Redeemed perks (id + time). */
+  redeemed: { id: string; at: number }[];
+  /** Points history, newest first. */
+  ledger: VolLedgerEntry[];
+}
+
 /** A chat message within a conversation thread between two named participants. */
 export interface ChatMessage {
   id: string;

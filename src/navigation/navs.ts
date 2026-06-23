@@ -36,6 +36,7 @@ export const NAVS: Record<Role, RoleNav> = {
     items: [
       { key: 'home', label: 'Requests', icon: 'inbox', route: '/(volunteer)/requests' },
       { key: 'team', label: 'Team', icon: 'users', route: '/(volunteer)/team' },
+      { key: 'rewards', label: 'Rewards', icon: 'award', route: '/(volunteer)/rewards' },
       { key: 'profile', label: 'Profile', icon: 'user', route: '/(volunteer)/profile' },
     ],
   },

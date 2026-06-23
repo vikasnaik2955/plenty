@@ -24,7 +24,16 @@ import { repository } from '@/data/repository';
 import { INITIAL_PROFILES, MOCK_DATA } from '@/data/mock';
 import { STATUS_LABEL } from '@/theme';
 import { threadId, type ThreadReads, type Threads } from '@/utils/chat';
-import { monthKey } from '@/utils/datetime';
+import { monthKey, weekKey } from '@/utils/datetime';
+import {
+  applyRedeem,
+  computeDeliveryReward,
+  earnedBadgeIds,
+  POINTS,
+  type DeliveryReward,
+  type Perk,
+  type ScoredTask,
+} from '@/config/rewards';
 import type {
   ActiveAllocation,
   AppNotification,
@@ -47,6 +56,7 @@ import type {
   TransportVerification,
   Volunteer,
   VolunteerTask,
+  VolRewards,
 } from '@/data/types';
 
 export type ToastTone = 'success' | 'error' | 'warning' | 'info';
@@ -108,6 +118,8 @@ interface AppState {
   language: string;
   /** Push notifications preference. */
   pushEnabled: boolean;
+  /** The volunteer's rewards: points, tier inputs, streak, badges, perks, ledger. */
+  volRewards: VolRewards;
 }
 
 // The prototype shows 1,240 points and 38 people helped on the donor home.
@@ -124,6 +136,47 @@ const ACCEPT_MIN_MS = 4_000; // earliest a volunteer might respond
 const ACCEPT_MAX_MS = 26_000; // latest — beyond the window means no one accepts in time
 const AUTO_CANCEL_REASON =
   'No nearby volunteer accepted in time — they may all be busy right now. Please try again, or hand it over yourself.';
+
+/**
+ * Seed the volunteer rewards to a believable veteran state (matches the home's
+ * old "3,480 points / 132 trips" literals) so the tier, badges, streak, and
+ * ledger all look earned from the first launch.
+ */
+function seedVolRewards(): VolRewards {
+  const now = Date.now();
+  const DAY = 86400000;
+  const HOUR = 3600000;
+  const r: VolRewards = {
+    lifetimePoints: 3480,
+    balance: 3480,
+    deliveriesCompleted: 132,
+    peopleFed: 612,
+    onTimePickups: 121,
+    fullyDocumentedRuns: 96,
+    totalDistanceKm: 540,
+    foodDeliveries: 79,
+    teammateRuns: 14,
+    sheltersRegistered: 0,
+    monsoonDeliveries: 3,
+    deliveriesThisWeek: 1,
+    currentWeekKey: weekKey(now),
+    lastQualifiedWeekKey: weekKey(now) - 7 * DAY,
+    weeklyStreak: 3,
+    longestWeeklyStreak: 7,
+    graceQuarterUsed: null,
+    milestonesAwarded: [4],
+    badges: [],
+    redeemed: [],
+    ledger: [
+      { id: 'vl-seed-1', reason: 'Winter jackets delivered', delta: 85, at: now - 26 * HOUR, kind: 'earn' },
+      { id: 'vl-seed-2', reason: 'Packaged rice & dal delivered', delta: 95, at: now - 2 * DAY, kind: 'earn' },
+      { id: 'vl-seed-3', reason: 'Cooked meals delivered', delta: 70, at: now - 5 * DAY, kind: 'earn' },
+      { id: 'vl-seed-4', reason: '4-week streak bonus', delta: 150, at: now - 9 * DAY, kind: 'bonus' },
+    ],
+  };
+  r.badges = earnedBadgeIds(r);
+  return r;
+}
 
 function initialState(): AppState {
   const V = MOCK_DATA.VOLUNTEERS;
@@ -198,6 +251,7 @@ function initialState(): AppState {
     ],
     language: 'English',
     pushEnabled: true,
+    volRewards: seedVolRewards(),
   };
 }
 
@@ -252,6 +306,7 @@ type Action =
   | { type: 'UPDATE_DONATION'; id: string; patch: Partial<Donation> }
   | { type: 'UPDATE_PROFILE'; role: Role; patch: Partial<Profile> }
   | { type: 'COMPLETE_DONATION'; points: number; people: number }
+  | { type: 'SET_VOL_REWARDS'; rewards: VolRewards }
   | { type: 'RESET' };
 
 function reducer(state: AppState, action: Action): AppState {
@@ -567,6 +622,8 @@ function reducer(state: AppState, action: Action): AppState {
         rewardPoints: state.rewardPoints + action.points,
         peopleHelped: state.peopleHelped + action.people,
       };
+    case 'SET_VOL_REWARDS':
+      return { ...state, volRewards: action.rewards };
     case 'RESET':
       return { ...initialState(), data: state.data };
     default:
@@ -596,6 +653,9 @@ export interface AppStore extends AppState {
   setVolTask: (id: string | null) => void;
   updateVolTask: (id: string, patch: Partial<VolunteerTask>) => void;
   advanceVolTask: (id: string, status: Status) => void;
+  // volunteer rewards
+  awardDelivery: (task: ScoredTask) => DeliveryReward;
+  redeemPerk: (perk: Perk) => boolean;
   // team
   addToTeam: (v: Volunteer) => void;
   addMember: (v: Volunteer) => void;
@@ -885,6 +945,45 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [notifyTaskStatus],
   );
 
+  // Award rewards for a completed delivery. Returns the itemized breakdown so the
+  // task screen can show a celebration. Counters, streak, badges, and the ledger
+  // are all updated in one pure computation.
+  const awardDelivery = useCallback(
+    (task: ScoredTask): DeliveryReward => {
+      const now = Date.now();
+      const prev = stateRef.current.volRewards;
+      const { next, reward } = computeDeliveryReward(prev, task, now);
+      dispatch({ type: 'SET_VOL_REWARDS', rewards: next });
+      pushNotification(
+        'reward',
+        `+${reward.total} points earned`,
+        reward.newBadges.length
+          ? `${task.title ?? 'Delivery'} completed · new badge: ${reward.newBadges[0].name} 🎉`
+          : `${task.title ?? 'Delivery'} completed. Keep your streak going!`,
+        ['volunteer'],
+      );
+      return reward;
+    },
+    [pushNotification],
+  );
+
+  // Redeem a perk from the rewards store (spends the balance, not lifetime points).
+  const redeemPerk = useCallback(
+    (perk: Perk): boolean => {
+      const now = Date.now();
+      const prev = stateRef.current.volRewards;
+      const res = applyRedeem(prev, perk, prev.lifetimePoints, now);
+      if (!res.ok || !res.next) {
+        showToast(res.reason ?? 'Cannot redeem yet', 'error');
+        return false;
+      }
+      dispatch({ type: 'SET_VOL_REWARDS', rewards: res.next });
+      showToast(`Redeemed ${perk.name} 🎁`, 'success');
+      return true;
+    },
+    [showToast],
+  );
+
   const addToTeam = useCallback(
     (v: Volunteer) => {
       dispatch({ type: 'ADD_TO_TEAM', volunteer: v });
@@ -916,7 +1015,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
         addedAt: Date.now(),
       };
       dispatch({ type: 'ADD_CONSUMER', consumer });
-      showToast(`${consumer.name} added to recipients`, 'success');
+      // Volunteers earn points for putting a new shelter on the map.
+      if (stateRef.current.role === 'volunteer') {
+        const now = Date.now();
+        const prev = stateRef.current.volRewards;
+        const nextR: VolRewards = {
+          ...prev,
+          sheltersRegistered: prev.sheltersRegistered + 1,
+          lifetimePoints: prev.lifetimePoints + POINTS.shelter,
+          balance: prev.balance + POINTS.shelter,
+          ledger: [
+            { id: `vr-sh-${now}`, reason: `Registered ${consumer.name}`, delta: POINTS.shelter, at: now, kind: 'earn' },
+            ...prev.ledger,
+          ],
+        };
+        nextR.badges = Array.from(new Set([...prev.badges, ...earnedBadgeIds(nextR)]));
+        dispatch({ type: 'SET_VOL_REWARDS', rewards: nextR });
+        showToast(`${consumer.name} added · +${POINTS.shelter} points`, 'success');
+      } else {
+        showToast(`${consumer.name} added to recipients`, 'success');
+      }
       return consumer;
     },
     [showToast],
@@ -1133,6 +1251,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setVolTask,
       updateVolTask,
       advanceVolTask,
+      awardDelivery,
+      redeemPerk,
       addToTeam,
       addMember,
       addConsumer,
@@ -1182,6 +1302,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setVolTask,
       updateVolTask,
       advanceVolTask,
+      awardDelivery,
+      redeemPerk,
       addToTeam,
       addMember,
       addConsumer,

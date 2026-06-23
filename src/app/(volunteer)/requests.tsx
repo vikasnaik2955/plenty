@@ -27,6 +27,7 @@ import { StatCard } from '@/components/ui/stat-card';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
+import { tierForPoints } from '@/config/rewards';
 import { useApp } from '@/store/app-store';
 import { colors, radius, shadows, space } from '@/theme';
 import { callNumber } from '@/utils/contact';
@@ -38,6 +39,8 @@ const ACTION_LABEL: Record<string, string> = {
   picked_up: 'Deliver',
   delivered: 'Complete',
 };
+
+const grp = (n: number) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
 export default function VolHome() {
   const router = useRouter();
@@ -69,7 +72,7 @@ export default function VolHome() {
     (r) => !activeIds.includes(r.id) && !declined.includes(r.id),
   );
   const activeTasks = s.volActive.filter((t) => t.current !== 'completed');
-  const completedCount = s.volActive.filter((t) => t.current === 'completed').length;
+  const tierName = tierForPoints(s.volRewards.lifetimePoints).name;
 
   const openTask = (id: string) => {
     s.setVolTask(id);
@@ -110,17 +113,24 @@ export default function VolHome() {
     >
       <View style={styles.statRow}>
         <StatCard
-          value={String(132 + completedCount)}
+          value={grp(s.volRewards.deliveriesCompleted)}
           label="Total trips"
           accent="brand"
           icon={<Icon name="truck" size={20} color={colors.brandStrong} />}
         />
-        <StatCard
-          value="3,480"
-          label="Reward points"
-          accent="reward"
-          icon={<Icon name="award" size={20} color={colors.reward} />}
-        />
+        <Pressable
+          style={{ flex: 1 }}
+          onPress={() => router.push('/(volunteer)/rewards')}
+          accessibilityRole="button"
+          accessibilityLabel="Open your rewards"
+        >
+          <StatCard
+            value={grp(s.volRewards.balance)}
+            label={`${tierName} · view rewards`}
+            accent="reward"
+            icon={<Icon name="award" size={20} color={colors.reward} />}
+          />
+        </Pressable>
       </View>
 
       <View style={styles.body}>
