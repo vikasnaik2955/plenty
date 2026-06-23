@@ -1,98 +1,72 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+/**
+ * Splash — branded entry. "Share what's spare." → Get started → role select.
+ * Ported from SharedScreens.jsx `Splash`.
+ */
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { BrandMark } from '@/components/brand-mark';
+import { Button } from '@/components/ui/button';
+import { Text } from '@/components/ui/text';
+import { palette, radius, space } from '@/theme';
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
+export default function SplashScreen() {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+
   return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
-
-export default function HomeScreen() {
-  return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
-
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
-
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+    <LinearGradient
+      colors={[palette.green500, palette.green700]}
+      start={{ x: 0.1, y: 0 }}
+      end={{ x: 0.9, y: 1 }}
+      style={styles.fill}
+    >
+      <StatusBar style="light" />
+      <View style={styles.center}>
+        <View style={styles.tile}>
+          <BrandMark size={64} tile={false} />
+        </View>
+        <Text size={42} weight={800} color="#fff" style={styles.wordmark}>
+          plenty
+        </Text>
+        <Text size={17} weight={500} color="#fff" align="center" style={styles.tagline}>
+          Share what&apos;s spare. A neighbour nearby needs it today.
+        </Text>
+      </View>
+      <View style={[styles.footer, { bottom: insets.bottom + space[6] }]}>
+        <Button
+          fullWidth
+          size="lg"
+          rightIcon="arrow-right"
+          onPress={() => router.push('/roles')}
+          style={styles.cta}
+        >
+          <Text size={17} weight={700} color={palette.green600}>
+            Get started
+          </Text>
+        </Button>
+      </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
-  },
-  heroSection: {
+  fill: { flex: 1 },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: space[8] },
+  tile: {
+    width: 96,
+    height: 96,
+    borderRadius: radius['2xl'],
+    backgroundColor: 'rgba(255,255,255,0.16)',
     alignItems: 'center',
     justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
+    marginBottom: space[6],
   },
-  title: {
-    textAlign: 'center',
-  },
-  code: {
-    textTransform: 'uppercase',
-  },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
-  },
+  wordmark: { letterSpacing: -1.2 },
+  tagline: { marginTop: space[2], maxWidth: 260, lineHeight: 24, opacity: 0.92 },
+  footer: { position: 'absolute', left: space[6], right: space[6] },
+  cta: { backgroundColor: '#fff' },
 });

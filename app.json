@@ -8,7 +8,10 @@
     "scheme": "plenty",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "config": {
+        "googleMapsApiKey": "AIzaSyCoExv8thO4VMEtiLjcUtj3mhrWDIcU3F4"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -17,7 +20,12 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyCoExv8thO4VMEtiLjcUtj3mhrWDIcU3F4"
+        }
+      }
     },
     "web": {
       "output": "static",
@@ -38,7 +46,10 @@
     ],
     "experiments": {
       "typedRoutes": true,
-      "reactCompiler": true
+      "reactCompiler": false
+    },
+    "extra": {
+      "googleMapsApiKey": "AIzaSyCoExv8thO4VMEtiLjcUtj3mhrWDIcU3F4"
     }
   }
 }
