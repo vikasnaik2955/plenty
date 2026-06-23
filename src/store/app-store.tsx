@@ -43,6 +43,7 @@ import type {
   Donation,
   NewShelterInput,
   NotificationType,
+  OpenRequest,
   PlentyData,
   Profile,
   ProofPhotos,
@@ -128,12 +129,10 @@ interface AppState {
 const REWARD_BASE = 1240;
 const PEOPLE_BASE = 38;
 
-// "Finding a volunteer" simulation window. A nearby volunteer responds after a
-// random delay; if that delay runs past the window the request is auto-cancelled
-// (no one accepted in time) so the donor never waits forever on a stale request.
-const ACCEPT_WINDOW_MS = 10 * 60_000; // 10 min — how long we wait before auto-cancelling
-const ACCEPT_MIN_MS = 30_000; // earliest a volunteer might respond (30s)
-const ACCEPT_MAX_MS = 13 * 60_000; // latest (13 min) — beyond the window means no one accepts in time
+// How long a request waits for a REAL volunteer to accept before it auto-cancels.
+// (A volunteer accepting comes from the volunteer role via acceptRequest — there
+// is no fake auto-accept; the request genuinely sits in OPEN_REQUESTS until then.)
+const ACCEPT_WINDOW_MS = 10 * 60_000; // 10 min
 const AUTO_CANCEL_REASON =
   'No nearby volunteer accepted in time — they may all be busy right now. Please try again, or hand it over yourself.';
 
@@ -271,6 +270,8 @@ type Action =
   | { type: 'REARM_ALLOCATION'; at: number; expiresAt: number }
   | { type: 'ADD_PROOF'; status: string; uri: string; at: number }
   | { type: 'CLEAR_PROOFS' }
+  | { type: 'ADD_OPEN_REQUEST'; request: OpenRequest }
+  | { type: 'REMOVE_OPEN_REQUEST'; id: string }
   | { type: 'ACCEPT_REQUEST'; requestId: string; at: number }
   | { type: 'SET_VOL_TASK'; id: string | null }
   | { type: 'UPDATE_VOL_TASK'; id: string; patch: Partial<VolunteerTask>; at?: number }
@@ -347,6 +348,11 @@ function reducer(state: AppState, action: Action): AppState {
               expiresAt: undefined,
               timestamps: { ...state.allocation.timestamps, cancelled: action.at },
             },
+            // Pull the stale request out of the volunteers' broadcast list.
+            data: {
+              ...state.data,
+              OPEN_REQUESTS: state.data.OPEN_REQUESTS.filter((r) => r.id !== state.allocation!.id),
+            },
           }
         : state;
     case 'REARM_ALLOCATION':
@@ -375,12 +381,37 @@ function reducer(state: AppState, action: Action): AppState {
       };
     case 'CLEAR_PROOFS':
       return { ...state, proofs: {} };
+    case 'ADD_OPEN_REQUEST':
+      return {
+        ...state,
+        // Prepend so the volunteer sees the newest request at the top.
+        data: { ...state.data, OPEN_REQUESTS: [action.request, ...state.data.OPEN_REQUESTS] },
+      };
+    case 'REMOVE_OPEN_REQUEST':
+      return {
+        ...state,
+        data: { ...state.data, OPEN_REQUESTS: state.data.OPEN_REQUESTS.filter((r) => r.id !== action.id) },
+      };
     case 'ACCEPT_REQUEST': {
       const req = state.data.OPEN_REQUESTS.find((r) => r.id === action.requestId);
       if (!req) return state;
       const already = state.volActive.some((t) => t.id === req.id);
+      const who = state.profiles.volunteer.name;
+      // Cross-account sync: if the donor's active allocation is this job, reflect
+      // the real acceptance on their track (status + which volunteer accepted).
+      const allocation =
+        state.allocation && state.allocation.id === req.id
+          ? {
+              ...state.allocation,
+              current: 'accepted' as Status,
+              volunteer: who,
+              expiresAt: undefined,
+              timestamps: { ...state.allocation.timestamps, accepted: action.at },
+            }
+          : state.allocation;
       return {
         ...state,
+        allocation,
         // Bug-fix: remove the accepted request from the open broadcast list so
         // other volunteers no longer see it.
         data: {
@@ -398,19 +429,28 @@ function reducer(state: AppState, action: Action): AppState {
     }
     case 'SET_VOL_TASK':
       return { ...state, volTaskId: action.id };
-    case 'UPDATE_VOL_TASK':
-      return {
-        ...state,
-        volActive: state.volActive.map((t) => {
-          if (t.id !== action.id) return t;
-          const next: VolunteerTask = { ...t, ...action.patch };
-          // Stamp the time when the task advances to a new lifecycle stage.
-          if (action.patch.current && action.at != null) {
-            next.timestamps = { ...t.timestamps, [action.patch.current]: action.at };
-          }
-          return next;
-        }),
-      };
+    case 'UPDATE_VOL_TASK': {
+      const volActive = state.volActive.map((t) => {
+        if (t.id !== action.id) return t;
+        const next: VolunteerTask = { ...t, ...action.patch };
+        // Stamp the time when the task advances to a new lifecycle stage.
+        if (action.patch.current && action.at != null) {
+          next.timestamps = { ...t.timestamps, [action.patch.current]: action.at };
+        }
+        return next;
+      });
+      // Cross-account sync: mirror the status onto the donor's allocation so their
+      // track advances in real time (picked up → delivered → completed).
+      let allocation = state.allocation;
+      if (action.patch.current && action.at != null && allocation && allocation.id === action.id) {
+        allocation = {
+          ...allocation,
+          current: action.patch.current,
+          timestamps: { ...allocation.timestamps, [action.patch.current]: action.at },
+        };
+      }
+      return { ...state, volActive, allocation };
+    }
     case 'ADD_TO_TEAM':
       return {
         ...state,
@@ -707,7 +747,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   stateRef.current = state;
   const [toast, setToast] = useState<ToastState | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const acceptTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cancelTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const verifyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Monotonic id source for entities created in-app (recipients, etc.).
@@ -722,7 +761,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => {
       alive = false;
       if (toastTimer.current) clearTimeout(toastTimer.current);
-      if (acceptTimer.current) clearTimeout(acceptTimer.current);
       if (cancelTimer.current) clearTimeout(cancelTimer.current);
       if (verifyTimer.current) clearTimeout(verifyTimer.current);
     };
@@ -798,27 +836,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  // Arm the "finding a volunteer" simulation for the active request. A nearby
-  // volunteer may accept after a random delay; if that delay runs past the wait
-  // window, nobody accepts in time and the request auto-cancels with a default
-  // reason. Both timers no-op unless the request is still "requested", so
-  // whichever fires first wins (and a manual cancel/withdraw cancels both).
+  // Arm the auto-cancel: if no REAL volunteer accepts within the wait window, the
+  // request auto-cancels with a default reason (and is pulled from the broadcast
+  // list). Acceptance is driven by the volunteer role — there is no fake accept.
   const armWait = useCallback(
     (expiresAt: number) => {
-      if (acceptTimer.current) clearTimeout(acceptTimer.current);
       if (cancelTimer.current) clearTimeout(cancelTimer.current);
-      const acceptDelay = ACCEPT_MIN_MS + Math.random() * (ACCEPT_MAX_MS - ACCEPT_MIN_MS);
-      acceptTimer.current = setTimeout(() => {
-        if (stateRef.current.allocation?.current !== 'requested') return;
-        dispatch({ type: 'ADVANCE_ALLOCATION', status: 'accepted', at: Date.now() });
-        const who = stateRef.current.data.VOLUNTEERS[0]?.name ?? 'A volunteer';
-        pushNotification(
-          'accepted',
-          'Volunteer on the way',
-          `${who} accepted your request and is heading to pickup.`,
-          ['donor'],
-        );
-      }, acceptDelay);
       cancelTimer.current = setTimeout(
         () => {
           if (stateRef.current.allocation?.current !== 'requested') return;
@@ -838,14 +861,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const cat = state.draft.category;
       const needsVol = state.draft.needsVolunteer !== false;
       const at = Date.now();
+      const jobId = `req-${idSeq.current++}`;
       const expiresAt = at + ACCEPT_WINDOW_MS;
+      const title = state.draft.title || (cat === 'food' ? 'Cooked meal' : 'Clothes bundle');
+      const serves = state.draft.serves;
       const alloc: ActiveAllocation = {
+        id: jobId,
         category: cat,
-        title: state.draft.title || (cat === 'food' ? 'Cooked meal' : 'Clothes bundle'),
+        title,
         consumer: consumer.name,
         current: 'requested',
         distance: consumer.distance,
-        serves: consumer.people,
+        serves: serves ?? consumer.people,
+        pieces: state.draft.pieces,
         needsVolunteer: needsVol,
         createdAt: at,
         expiresAt: needsVol ? expiresAt : undefined,
@@ -855,16 +883,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
       dispatch({ type: 'SET_ALLOCATION', allocation: alloc });
       dispatch({ type: 'COUNT_DONATION', name: consumer.name, category: cat, monthKey: monthKey() });
       if (needsVol) {
+        // Create the REAL open request volunteers see and can accept (shared id
+        // links it back to this allocation, so the donor track stays in sync).
+        const request: OpenRequest = {
+          id: jobId,
+          category: cat,
+          title:
+            cat === 'food'
+              ? `${title}${serves ? ` · serves ${serves}` : ''}`
+              : `${title}${state.draft.pieces ? ` · ${state.draft.pieces}` : ''}`,
+          donor: stateRef.current.profiles.donor.name,
+          distance: consumer.distance,
+          people: serves ?? consumer.people,
+          time: 'Pickup soon',
+          drop: consumer.name,
+        };
+        dispatch({ type: 'ADD_OPEN_REQUEST', request });
         showToast('Request sent to nearby volunteers', 'success');
         pushNotification(
           'request',
           'New donation to deliver',
-          `${alloc.title} for ${consumer.name} — pickup needed.`,
+          `${title} for ${consumer.name} — pickup needed.`,
           ['volunteer', 'transport'],
         );
-        // Simulate the search for a nearby volunteer (no backend yet). Centralized
-        // here so donor-track reflects a single, consistent transition — and so
-        // an unanswered request is auto-cancelled instead of waiting forever.
+        // Auto-cancel only if no real volunteer accepts within the window.
         armWait(expiresAt);
       } else {
         showToast('Recipient notified — arrange handover directly', 'success');
@@ -881,6 +923,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const expiresAt = at + ACCEPT_WINDOW_MS;
     dispatch({ type: 'CLEAR_PROOFS' });
     dispatch({ type: 'REARM_ALLOCATION', at, expiresAt });
+    // Re-broadcast the same job so volunteers can see it again.
+    dispatch({
+      type: 'ADD_OPEN_REQUEST',
+      request: {
+        id: a.id,
+        category: a.category,
+        title:
+          a.category === 'food'
+            ? `${a.title}${a.serves ? ` · serves ${a.serves}` : ''}`
+            : `${a.title}${a.pieces ? ` · ${a.pieces}` : ''}`,
+        donor: stateRef.current.profiles.donor.name,
+        distance: a.distance,
+        people: a.serves ?? 0,
+        time: 'Pickup soon',
+        drop: a.consumer,
+      },
+    });
     showToast('Re-sent to nearby volunteers', 'info');
     pushNotification(
       'request',
@@ -891,15 +950,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     armWait(expiresAt);
   }, [armWait, showToast, pushNotification]);
 
-  // Donor withdraws the request themselves (clears the pending allocation).
+  // Donor withdraws the request themselves (clears the pending allocation + its
+  // broadcast so volunteers no longer see it).
   const withdrawAllocation = useCallback(() => {
-    if (acceptTimer.current) clearTimeout(acceptTimer.current);
     if (cancelTimer.current) clearTimeout(cancelTimer.current);
+    const id = stateRef.current.allocation?.id;
+    if (id) dispatch({ type: 'REMOVE_OPEN_REQUEST', id });
     dispatch({ type: 'SET_ALLOCATION', allocation: null });
   }, []);
 
   const acceptRequest = useCallback(
     (requestId: string) => {
+      // A real volunteer accepted, so the donor's auto-cancel must not fire.
+      if (cancelTimer.current) clearTimeout(cancelTimer.current);
       dispatch({ type: 'ACCEPT_REQUEST', requestId, at: Date.now() });
       showToast('Accepted — added to your active tasks', 'success');
       const req = stateRef.current.data.OPEN_REQUESTS.find((r) => r.id === requestId);

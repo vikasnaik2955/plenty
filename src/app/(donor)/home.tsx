@@ -30,6 +30,9 @@ export default function DonorHome() {
     ['requested', 'accepted', 'picked_up'].includes(d.status),
   );
   const recent = s.data.DONATIONS.filter((d) => ['completed', 'cancelled'].includes(d.status));
+  // The donor's own live request (created this session), surfaced so they can
+  // jump back to tracking it; null once it has completed.
+  const liveAlloc = s.allocation && s.allocation.current !== 'completed' ? s.allocation : null;
 
   return (
     <Page
@@ -104,6 +107,20 @@ export default function DonorHome() {
 
         <SectionHeader title="Active requests" />
         <View style={{ gap: 10 }}>
+          {/* The donor's live request (just created) — tap to return to tracking. */}
+          {liveAlloc && (
+            <DonationCard
+              category={liveAlloc.category}
+              title={liveAlloc.title}
+              status={liveAlloc.current}
+              time={`To ${liveAlloc.consumer}`}
+              onPress={() => router.push('/(donor)/track')}
+              meta={[
+                { icon: 'users', label: liveAlloc.serves ? `Serves ${liveAlloc.serves}` : (liveAlloc.pieces ?? '') },
+                { icon: 'map-pin', label: `${liveAlloc.distance} km` },
+              ]}
+            />
+          )}
           {active.map((d) => (
             <DonationCard
               key={d.id}
@@ -113,6 +130,7 @@ export default function DonorHome() {
               time={`To ${d.consumer}`}
               onPress={() => {
                 s.setAllocation({
+                  id: d.id,
                   category: d.category,
                   title: d.title,
                   consumer: d.consumer,
@@ -130,6 +148,11 @@ export default function DonorHome() {
               ]}
             />
           ))}
+          {!liveAlloc && active.length === 0 && (
+            <Text size={13} color={colors.textMuted}>
+              No active requests yet — donate something to get started.
+            </Text>
+          )}
         </View>
 
         <SectionHeader

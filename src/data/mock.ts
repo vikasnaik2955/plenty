@@ -37,11 +37,10 @@ export const MOCK_DATA: PlentyData = {
     { id: 'al4', category: 'clothes', title: "Kids' clothing", pieces: '20 pieces', distance: 8.9, status: 'cancelled', consumer: 'Little Stars Home', volunteer: '—', time: '4 days ago' },
   ],
 
-  OPEN_REQUESTS: [
-    { id: 'r1', category: 'food', title: 'Veg biryani · serves 12', donor: 'Asha V.', distance: 1.8, people: 12, time: 'Pickup before 8 PM', drop: 'Hope Shelter' },
-    { id: 'r2', category: 'clothes', title: 'Blankets · 2 bags', donor: 'Imran S.', distance: 2.6, people: 30, time: 'Pickup before 9 PM', drop: 'Seva Kitchen' },
-    { id: 'r3', category: 'food', title: 'Sandwiches · serves 20', donor: 'Neha P.', distance: 3.9, people: 20, time: 'Pickup before 7 PM', drop: 'Asha Sadan NGO' },
-  ],
+  // No seeded open requests — the volunteer's nearby list fills with REAL
+  // requests created by a donor (confirmSend → ADD_OPEN_REQUEST). This keeps the
+  // donor→volunteer flow honest: you only see what was actually created.
+  OPEN_REQUESTS: [],
 
   NOTIFICATIONS: [
     { id: 'n1', type: 'accepted', title: 'Volunteer on the way', message: 'Ravi accepted your donation and is heading to pickup.', time: '2m', unread: true },

@@ -237,6 +237,8 @@ export type ProofPhotos = Record<string, ProofPhoto>;
 
 /** A donation in progress for the donor's "track" flow. */
 export interface ActiveAllocation {
+  /** Shared id linking the donor allocation ↔ the broadcast OpenRequest ↔ the volunteer task. */
+  id: string;
   category: Category;
   title: string;
   consumer: string;
