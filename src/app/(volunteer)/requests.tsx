@@ -48,7 +48,6 @@ export default function VolHome() {
   const profile = s.profiles.volunteer;
 
   const [available, setAvailable] = useState(true);
-  const [declined, setDeclined] = useState<string[]>([]);
   const [detail, setDetail] = useState<Consumer | null>(null);
   const [review, setReview] = useState<OpenRequest | null>(null);
 
@@ -63,13 +62,13 @@ export default function VolHome() {
   };
   const declineReviewed = () => {
     if (!review) return;
-    setDeclined((d) => [...d, review.id]);
+    s.declineRequest(review.id);
     setReview(null);
   };
 
   const activeIds = s.volActive.map((t) => t.id);
   const requests = s.data.OPEN_REQUESTS.filter(
-    (r) => !activeIds.includes(r.id) && !declined.includes(r.id),
+    (r) => !activeIds.includes(r.id) && !s.declinedRequests.includes(r.id),
   );
   const activeTasks = s.volActive.filter((t) => t.current !== 'completed');
   const tierName = tierForPoints(s.volRewards.lifetimePoints).name;
@@ -236,7 +235,7 @@ export default function VolHome() {
                 time={r.time}
                 acceptLabel="Review"
                 onAccept={() => setReview(r)}
-                onDecline={() => setDeclined((d) => [...d, r.id])}
+                onDecline={() => s.declineRequest(r.id)}
               />
             ))}
           </View>

@@ -200,7 +200,9 @@ export default function DonorTrack() {
         </>
       )}
 
-      {!selfHandover && (
+      {/* Delivery team only appears AFTER a real volunteer accepts — the donor
+          never sees / manages volunteers while the request is still waiting. */}
+      {hasVolunteer && (
         <TeamSection
           title="Delivery team"
           members={a.team ?? []}
@@ -218,7 +220,7 @@ export default function DonorTrack() {
         />
       )}
 
-      {!selfHandover && transportForDonor.length > 0 && (
+      {hasVolunteer && transportForDonor.length > 0 && (
         <>
           <SectionHeader title="Transport" />
           <View style={{ gap: 10 }}>

@@ -26,12 +26,9 @@ export default function DonorHome() {
   const s = useApp();
   const p = s.profiles.donor;
 
-  const active = s.data.DONATIONS.filter((d) =>
-    ['requested', 'accepted', 'picked_up'].includes(d.status),
-  );
   const recent = s.data.DONATIONS.filter((d) => ['completed', 'cancelled'].includes(d.status));
-  // The donor's own live request (created this session), surfaced so they can
-  // jump back to tracking it; null once it has completed.
+  // The donor's own live request (created this session) is the only "active"
+  // request — no seeded/mock in-progress donations. Null once it completes.
   const liveAlloc = s.allocation && s.allocation.current !== 'completed' ? s.allocation : null;
 
   return (
@@ -107,8 +104,7 @@ export default function DonorHome() {
 
         <SectionHeader title="Active requests" />
         <View style={{ gap: 10 }}>
-          {/* The donor's live request (just created) — tap to return to tracking. */}
-          {liveAlloc && (
+          {liveAlloc ? (
             <DonationCard
               category={liveAlloc.category}
               title={liveAlloc.title}
@@ -120,35 +116,7 @@ export default function DonorHome() {
                 { icon: 'map-pin', label: `${liveAlloc.distance} km` },
               ]}
             />
-          )}
-          {active.map((d) => (
-            <DonationCard
-              key={d.id}
-              category={d.category}
-              title={d.title}
-              status={d.status}
-              time={`To ${d.consumer}`}
-              onPress={() => {
-                s.setAllocation({
-                  id: d.id,
-                  category: d.category,
-                  title: d.title,
-                  consumer: d.consumer,
-                  current: d.status,
-                  distance: d.distance,
-                  serves: d.serves,
-                  pieces: d.pieces,
-                  needsVolunteer: true,
-                });
-                router.push('/(donor)/track');
-              }}
-              meta={[
-                { icon: 'users', label: d.serves ? `Serves ${d.serves}` : (d.pieces ?? '') },
-                { icon: 'map-pin', label: `${d.distance} km` },
-              ]}
-            />
-          ))}
-          {!liveAlloc && active.length === 0 && (
+          ) : (
             <Text size={13} color={colors.textMuted}>
               No active requests yet — donate something to get started.
             </Text>

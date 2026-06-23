@@ -87,6 +87,8 @@ interface AppState {
   proofs: ProofPhotos;
   volActive: VolunteerTask[];
   volTaskId: string | null;
+  /** Request ids the volunteer declined (persisted so they don't reappear on role switch). */
+  declinedRequests: string[];
   team: Volunteer[];
   suggestions: Volunteer[];
   profiles: Profiles;
@@ -188,6 +190,7 @@ function initialState(): AppState {
     proofs: {},
     volActive: [],
     volTaskId: null,
+    declinedRequests: [],
     team: V.slice(0, 2),
     suggestions: V.slice(2).map((v) => ({ ...v, distance: Math.round((v.distance + 6) * 10) / 10 })),
     profiles: structuredCloneSafe(INITIAL_PROFILES) as Profiles,
@@ -272,6 +275,7 @@ type Action =
   | { type: 'CLEAR_PROOFS' }
   | { type: 'ADD_OPEN_REQUEST'; request: OpenRequest }
   | { type: 'REMOVE_OPEN_REQUEST'; id: string }
+  | { type: 'DECLINE_REQUEST'; id: string }
   | { type: 'ACCEPT_REQUEST'; requestId: string; at: number }
   | { type: 'SET_VOL_TASK'; id: string | null }
   | { type: 'UPDATE_VOL_TASK'; id: string; patch: Partial<VolunteerTask>; at?: number }
@@ -392,6 +396,10 @@ function reducer(state: AppState, action: Action): AppState {
         ...state,
         data: { ...state.data, OPEN_REQUESTS: state.data.OPEN_REQUESTS.filter((r) => r.id !== action.id) },
       };
+    case 'DECLINE_REQUEST':
+      return state.declinedRequests.includes(action.id)
+        ? state
+        : { ...state, declinedRequests: [...state.declinedRequests, action.id] };
     case 'ACCEPT_REQUEST': {
       const req = state.data.OPEN_REQUESTS.find((r) => r.id === action.requestId);
       if (!req) return state;
@@ -690,6 +698,7 @@ export interface AppStore extends AppState {
   addProof: (status: string, uri: string) => void; // stamps the upload time
   // volunteer flow
   acceptRequest: (requestId: string) => void;
+  declineRequest: (id: string) => void;
   setVolTask: (id: string | null) => void;
   updateVolTask: (id: string, patch: Partial<VolunteerTask>) => void;
   advanceVolTask: (id: string, status: Status) => void;
@@ -921,7 +930,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (!a) return;
     const at = Date.now();
     const expiresAt = at + ACCEPT_WINDOW_MS;
-    dispatch({ type: 'CLEAR_PROOFS' });
     dispatch({ type: 'REARM_ALLOCATION', at, expiresAt });
     // Re-broadcast the same job so volunteers can see it again.
     dispatch({
@@ -977,6 +985,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [showToast, pushNotification],
   );
   const setVolTask = useCallback((id: string | null) => dispatch({ type: 'SET_VOL_TASK', id }), []);
+  const declineRequest = useCallback((id: string) => dispatch({ type: 'DECLINE_REQUEST', id }), []);
   const notifyTaskStatus = useCallback(
     (id: string, status: Status) => {
       const task = stateRef.current.volActive.find((t) => t.id === id);
@@ -1311,6 +1320,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       advanceAllocation,
       addProof,
       acceptRequest,
+      declineRequest,
       setVolTask,
       updateVolTask,
       advanceVolTask,
@@ -1362,6 +1372,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       advanceAllocation,
       addProof,
       acceptRequest,
+      declineRequest,
       setVolTask,
       updateVolTask,
       advanceVolTask,
