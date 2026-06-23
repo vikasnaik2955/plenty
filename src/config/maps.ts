@@ -1,6 +1,8 @@
 /**
- * Google Maps key access. Paste your key in `app.json` (android.config.googleMaps.apiKey,
- * ios.config.googleMapsApiKey, and extra.googleMapsApiKey) — see the README/notes.
+ * Google Maps key access. The key is supplied via the `GOOGLE_MAPS_API_KEY`
+ * environment variable (local, gitignored `.env` — copy `.env.example`) and
+ * injected into the native config + `extra.googleMapsApiKey` by `app.config.js`,
+ * so it never lives in source control.
  * The embedded map only renders in a development build; `hasMapsKey` lets the UI
  * fall back to the static map + "Open in Google Maps" when the key isn't set or
  * when running in Expo Go.

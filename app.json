@@ -10,7 +10,7 @@
     "ios": {
       "icon": "./assets/expo.icon",
       "config": {
-        "googleMapsApiKey": "AIzaSyCoExv8thO4VMEtiLjcUtj3mhrWDIcU3F4"
+        "googleMapsApiKey": ""
       }
     },
     "android": {
@@ -23,7 +23,7 @@
       "predictiveBackGestureEnabled": false,
       "config": {
         "googleMaps": {
-          "apiKey": "AIzaSyCoExv8thO4VMEtiLjcUtj3mhrWDIcU3F4"
+          "apiKey": ""
         }
       }
     },
@@ -49,7 +49,7 @@
       "reactCompiler": false
     },
     "extra": {
-      "googleMapsApiKey": "AIzaSyCoExv8thO4VMEtiLjcUtj3mhrWDIcU3F4"
+      "googleMapsApiKey": ""
     }
   }
 }
