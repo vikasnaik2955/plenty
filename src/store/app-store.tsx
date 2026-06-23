@@ -131,9 +131,9 @@ const PEOPLE_BASE = 38;
 // "Finding a volunteer" simulation window. A nearby volunteer responds after a
 // random delay; if that delay runs past the window the request is auto-cancelled
 // (no one accepted in time) so the donor never waits forever on a stale request.
-const ACCEPT_WINDOW_MS = 20_000; // how long we wait before auto-cancelling
-const ACCEPT_MIN_MS = 4_000; // earliest a volunteer might respond
-const ACCEPT_MAX_MS = 26_000; // latest — beyond the window means no one accepts in time
+const ACCEPT_WINDOW_MS = 10 * 60_000; // 10 min — how long we wait before auto-cancelling
+const ACCEPT_MIN_MS = 30_000; // earliest a volunteer might respond (30s)
+const ACCEPT_MAX_MS = 13 * 60_000; // latest (13 min) — beyond the window means no one accepts in time
 const AUTO_CANCEL_REASON =
   'No nearby volunteer accepted in time — they may all be busy right now. Please try again, or hand it over yourself.';
 
