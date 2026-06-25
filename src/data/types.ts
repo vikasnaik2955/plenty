@@ -336,6 +336,19 @@ export interface VolRewards {
   ledger: VolLedgerEntry[];
 }
 
+/** A feedback submission from any role (improvement ideas, bugs, etc.). */
+export interface FeedbackEntry {
+  id: string;
+  /** Who sent it. */
+  role: Role;
+  /** Selected category ids (stable English slugs, e.g. 'bug', 'feature'). */
+  categories: string[];
+  message: string;
+  /** Optional 1–5 star rating. */
+  rating?: number;
+  at: number;
+}
+
 /** A chat message within a conversation thread between two named participants. */
 export interface ChatMessage {
   id: string;

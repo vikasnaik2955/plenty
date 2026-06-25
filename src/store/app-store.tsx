@@ -42,6 +42,7 @@ import type {
   ChatMessage,
   Consumer,
   Donation,
+  FeedbackEntry,
   NewShelterInput,
   NotificationType,
   OpenRequest,
@@ -124,6 +125,8 @@ interface AppState {
   pushEnabled: boolean;
   /** The volunteer's rewards: points, tier inputs, streak, badges, perks, ledger. */
   volRewards: VolRewards;
+  /** Feedback submissions from any role (mock store; repository-ready). */
+  feedback: FeedbackEntry[];
 }
 
 // The prototype shows 1,240 points and 38 people helped on the donor home.
@@ -255,6 +258,7 @@ function initialState(): AppState {
     language: 'English',
     pushEnabled: true,
     volRewards: seedVolRewards(),
+    feedback: [],
   };
 }
 
@@ -313,6 +317,7 @@ type Action =
   | { type: 'UPDATE_PROFILE'; role: Role; patch: Partial<Profile> }
   | { type: 'COMPLETE_DONATION'; points: number; people: number }
   | { type: 'SET_VOL_REWARDS'; rewards: VolRewards }
+  | { type: 'ADD_FEEDBACK'; entry: FeedbackEntry }
   | { type: 'RESET' };
 
 function reducer(state: AppState, action: Action): AppState {
@@ -673,6 +678,8 @@ function reducer(state: AppState, action: Action): AppState {
       };
     case 'SET_VOL_REWARDS':
       return { ...state, volRewards: action.rewards };
+    case 'ADD_FEEDBACK':
+      return { ...state, feedback: [action.entry, ...state.feedback] };
     case 'RESET':
       return { ...initialState(), data: state.data };
     default:
@@ -724,6 +731,8 @@ export interface AppStore extends AppState {
   setPushEnabled: (enabled: boolean) => void;
   // consumer need
   markNeedUpdated: () => void;
+  // feedback
+  submitFeedback: (input: { categories: string[]; message: string; rating?: number }) => void;
   // chat
   sendMessage: (from: string, to: string, text: string) => void;
   editMessage: (me: string, other: string, messageId: string, text: string) => void;
@@ -1135,6 +1144,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const markNeedUpdated = useCallback(() => dispatch({ type: 'SET_NEED_UPDATED', at: Date.now() }), []);
 
+  // Record a feedback submission from the current role (mock; a real API plugs
+  // in behind the repository later).
+  const submitFeedback = useCallback(
+    (input: { categories: string[]; message: string; rating?: number }) => {
+      dispatch({
+        type: 'ADD_FEEDBACK',
+        entry: {
+          id: `fb-${idSeq.current++}`,
+          role: stateRef.current.role ?? 'donor',
+          categories: input.categories,
+          message: input.message.trim(),
+          rating: input.rating,
+          at: Date.now(),
+        },
+      });
+      showToast(tr('feedback.success'), 'success');
+    },
+    [showToast, tr],
+  );
+
   const updateDonation = useCallback(
     (id: string, patch: Partial<Donation>) => {
       dispatch({ type: 'UPDATE_DONATION', id, patch });
@@ -1372,6 +1401,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setLanguage,
       setPushEnabled,
       markNeedUpdated,
+      submitFeedback,
       sendMessage,
       editMessage,
       markThreadRead,
@@ -1424,6 +1454,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setLanguage,
       setPushEnabled,
       markNeedUpdated,
+      submitFeedback,
       sendMessage,
       editMessage,
       markThreadRead,

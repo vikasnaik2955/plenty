@@ -40,6 +40,7 @@ export function ProfileScreen({ role }: { role: Role }) {
     },
     { icon: 'globe', label: t('profile.language'), value: s.language, onPress: () => router.push('/language') },
     { icon: 'circle-help', label: t('profile.helpSupport'), onPress: () => router.push('/help') },
+    { icon: 'message-square', label: t('feedback.title'), onPress: () => router.push('/feedback') },
     { icon: 'share-2', label: t('share.button'), onPress: () => shareImpact(t, role) },
   ];
 
