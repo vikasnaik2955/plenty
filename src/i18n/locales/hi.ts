@@ -1,5 +1,6 @@
 /** Hindi (हिन्दी) translations. Missing keys fall back to English. */
 export const hi: Record<string, string> = {
+  "share.button": "अपना योगदान साझा करें",
   "validation.title": "आवश्यक जानकारी अधूरी",
   "validation.message": "जारी रखने से पहले कृपया ये भरें:\n{fields}",
   "addresses.addAddress": "पता जोड़ें",

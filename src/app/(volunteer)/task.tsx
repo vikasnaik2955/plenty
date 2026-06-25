@@ -27,6 +27,7 @@ import { useApp } from '@/store/app-store';
 import { colors, leading, palette, radius, shadows, space } from '@/theme';
 import { formatStamp } from '@/utils/datetime';
 import { callNumber, openDirections } from '@/utils/contact';
+import { shareImpact } from '@/utils/share';
 import type { DeliveryReward } from '@/config/rewards';
 import type { Status, Transport } from '@/data/types';
 
@@ -423,16 +424,27 @@ export default function VolTask() {
         title={tr('volTask.deliveryComplete')}
         onClose={() => setReward(null)}
         footer={
-          <Button
-            fullWidth
-            size="lg"
-            onPress={() => {
-              setReward(null);
-              back();
-            }}
-          >
-            {tr('common.done')}
-          </Button>
+          <View style={{ gap: space[2] }}>
+            <Button
+              fullWidth
+              size="lg"
+              variant="secondary"
+              leftIcon="share-2"
+              onPress={() => shareImpact(tr, 'volunteer')}
+            >
+              {tr('share.button')}
+            </Button>
+            <Button
+              fullWidth
+              size="lg"
+              onPress={() => {
+                setReward(null);
+                back();
+              }}
+            >
+              {tr('common.done')}
+            </Button>
+          </View>
         }
       >
         {reward && <RewardCelebration reward={reward} />}

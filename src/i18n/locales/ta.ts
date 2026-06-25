@@ -1,5 +1,6 @@
 /** Tamil (தமிழ்) translations. Missing keys fall back to English. */
 export const ta: Record<string, string> = {
+  "share.button": "உங்கள் பங்களிப்பைப் பகிரவும்",
   "validation.title": "தேவையான விவரங்கள் நிரப்பப்படவில்லை",
   "validation.message": "தொடர்வதற்கு முன் தயவுசெய்து இவற்றை நிரப்பவும்:\n{fields}",
   "addresses.addAddress": "முகவரி சேர்",

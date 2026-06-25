@@ -1,5 +1,6 @@
 /** Marathi (मराठी) translations. Missing keys fall back to English. */
 export const mr: Record<string, string> = {
+  "share.button": "तुमचा सहभाग शेअर करा",
   "validation.title": "आवश्यक माहिती अपूर्ण",
   "validation.message": "पुढे जाण्यापूर्वी कृपया हे भरा:\n{fields}",
   "addresses.addAddress": "पत्ता जोडा",

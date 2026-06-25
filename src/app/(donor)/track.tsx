@@ -24,6 +24,7 @@ import { useApp } from '@/store/app-store';
 import { colors, palette, radius, shadows, space } from '@/theme';
 import { formatStamp } from '@/utils/datetime';
 import { callNumber } from '@/utils/contact';
+import { shareImpact } from '@/utils/share';
 import type { Status } from '@/data/types';
 
 export default function DonorTrack() {
@@ -88,7 +89,20 @@ export default function DonorTrack() {
   };
 
   let footer: React.ReactNode = null;
-  if (selfHandover && a.current !== 'completed') {
+  if (a.current === 'completed') {
+    // Donation delivered — invite the donor to share their impact.
+    footer = (
+      <Button
+        fullWidth
+        size="lg"
+        leftIcon="share-2"
+        onPress={() => shareImpact(t, 'donor')}
+        style={{ backgroundColor: accent }}
+      >
+        {t('share.button')}
+      </Button>
+    );
+  } else if (selfHandover) {
     footer = (
       <Button fullWidth size="lg" onPress={markHandover} leftIcon="check">
         {t('donorTrack.markHandedOver')}

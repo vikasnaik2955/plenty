@@ -20,6 +20,7 @@ import { Text } from '@/components/ui/text';
 import { useT } from '@/i18n/use-t';
 import { useApp } from '@/store/app-store';
 import { colors, radius, shadows, space } from '@/theme';
+import { shareImpact } from '@/utils/share';
 import type { Role } from '@/data/types';
 
 export function ProfileScreen({ role }: { role: Role }) {
@@ -39,6 +40,7 @@ export function ProfileScreen({ role }: { role: Role }) {
     },
     { icon: 'globe', label: t('profile.language'), value: s.language, onPress: () => router.push('/language') },
     { icon: 'circle-help', label: t('profile.helpSupport'), onPress: () => router.push('/help') },
+    { icon: 'share-2', label: t('share.button'), onPress: () => shareImpact(t, role) },
   ];
 
   const [editing, setEditing] = useState(false);

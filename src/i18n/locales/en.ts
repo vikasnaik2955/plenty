@@ -815,4 +815,9 @@ export const en = {
   "volTeam.tripsCount": "{count} trips",
   "validation.title": "Missing required details",
   "validation.message": "Please fill in the following before you continue:\n{fields}",
+  "share.button": "Share your impact",
+  "share.donorCaption": "🍱 I just shared what's spare with Plenty!\n\nInstead of letting good food go to waste, I sent it to a community that needed it today. 💚\n\nYou have more to give than you think — join me and share your surplus food & clothes with neighbours who need them. 🙌\n\n📲 Get the app: {app}\n🌐 Learn more: {website}\n\n#Plenty #ShareWhatsSpare #KindnessMatters",
+  "share.volunteerCaption": "🚴 I just completed a delivery with Plenty!\n\nI picked up a donation and carried it to a shelter — because no good meal should go to waste while someone goes hungry. 💚\n\nTurn your spare time into someone's bright day. Come volunteer with me! 🙌\n\n📲 Get the app: {app}\n🌐 Learn more: {website}\n\n#Plenty #ShareWhatsSpare #Volunteer",
+  "share.transportCaption": "🚗 I just gave a donation a ride with Plenty!\n\nWith one spare trip, surplus food reached a shelter nearby. 💚\n\nGot wheels? Offer a lift and deliver hope — join me on Plenty! 🙌\n\n📲 Get the app: {app}\n🌐 Learn more: {website}\n\n#Plenty #ShareWhatsSpare #DeliverHope",
+  "share.adminCaption": "💚 Powering kindness with Plenty!\n\nEvery day, donors, volunteers and drivers turn surplus into smiles. Be part of the movement.\n\n📲 Get the app: {app}\n🌐 Learn more: {website}\n\n#Plenty #ShareWhatsSpare",
 } as const;

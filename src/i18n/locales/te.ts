@@ -1,5 +1,6 @@
 /** Telugu (తెలుగు) translations. Missing keys fall back to English. */
 export const te: Record<string, string> = {
+  "share.button": "మీ సహకారాన్ని షేర్ చేయండి",
   "validation.title": "అవసరమైన వివరాలు అసంపూర్ణం",
   "validation.message": "కొనసాగడానికి ముందు దయచేసి వీటిని పూరించండి:\n{fields}",
   "addresses.addAddress": "చిరునామా జోడించు",

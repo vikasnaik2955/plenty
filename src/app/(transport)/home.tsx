@@ -12,6 +12,7 @@ import { NotificationsButton } from '@/components/notifications-button';
 import { RoleBottomNav } from '@/components/role-bottom-nav';
 import { Avatar } from '@/components/ui/avatar';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
+import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Hero } from '@/components/ui/hero';
 import { Icon } from '@/components/ui/icon';
@@ -23,6 +24,7 @@ import { Text } from '@/components/ui/text';
 import { useT } from '@/i18n/use-t';
 import { useApp } from '@/store/app-store';
 import { colors, palette, radius, shadows, space } from '@/theme';
+import { shareImpact } from '@/utils/share';
 import type { OpenRequest } from '@/data/types';
 
 const vIcon = (t: string) => (t === 'Cargo van' ? 'truck' : t === 'Two-wheeler' ? 'bike' : t === 'Car' ? 'car' : 'caravan');
@@ -134,6 +136,18 @@ export default function TransportHome() {
             </View>
             <Icon name="chevron-right" size={20} color={colors.textMuted} />
           </Pressable>
+        )}
+
+        {acceptedCount > 0 && (
+          <Button
+            fullWidth
+            variant="secondary"
+            leftIcon="share-2"
+            onPress={() => shareImpact(t, 'transport')}
+            style={{ marginBottom: space[3] }}
+          >
+            {t('share.button')}
+          </Button>
         )}
 
         <SectionHeader

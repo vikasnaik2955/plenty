@@ -1,5 +1,6 @@
 /** Gujarati (ગુજરાતી) translations. Missing keys fall back to English. */
 export const gu: Record<string, string> = {
+  "share.button": "તમારું યોગદાન શેર કરો",
   "validation.title": "જરૂરી વિગતો અધૂરી",
   "validation.message": "આગળ વધતા પહેલાં કૃપા કરીને આ ભરો:\n{fields}",
   "addresses.addAddress": "સરનામું ઉમેરો",
