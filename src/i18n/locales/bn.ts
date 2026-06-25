@@ -1,5 +1,7 @@
 /** Bengali (বাংলা) translations. Missing keys fall back to English. */
 export const bn: Record<string, string> = {
+  "validation.title": "প্রয়োজনীয় তথ্য অসম্পূর্ণ",
+  "validation.message": "এগিয়ে যাওয়ার আগে অনুগ্রহ করে এগুলি পূরণ করুন:\n{fields}",
   "addresses.addAddress": "ঠিকানা যোগ করুন",
   "addresses.default": "ডিফল্ট",
   "addresses.editAddress": "ঠিকানা সম্পাদনা",

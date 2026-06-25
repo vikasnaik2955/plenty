@@ -17,17 +17,20 @@ import { Textarea } from '@/components/ui/textarea';
 import { useT } from '@/i18n/use-t';
 import { useApp } from '@/store/app-store';
 import { colors, fontSize } from '@/theme';
+import { requireFields } from '@/utils/validation';
 
 export default function ConNeed() {
   const router = useRouter();
   const t = useT();
   const s = useApp();
   const [prefs, setPrefs] = useState<string[]>(['food']);
+  const [people, setPeople] = useState('40');
 
   const toggle = (k: string) =>
     setPrefs(prefs.includes(k) ? prefs.filter((x) => x !== k) : [...prefs, k]);
 
   const save = () => {
+    if (!requireFields([{ value: parseInt(people, 10), label: t('conNeed.numberOfPeople') }], t)) return;
     s.markNeedUpdated();
     s.showToast(t('conNeed.needUpdated'), 'success');
     router.back();
@@ -50,7 +53,8 @@ export default function ConNeed() {
         />
         <Input
           label={t('conNeed.numberOfPeople')}
-          defaultValue="40"
+          value={people}
+          onChangeText={setPeople}
           required
           keyboardType="number-pad"
           leftIcon={<Icon name="users" size={18} color={colors.textMuted} />}

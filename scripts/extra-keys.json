@@ -40,5 +40,7 @@
   "transportVehicle.pricing": "Pricing",
   "transportVehicle.saveChanges": "Save changes",
   "transportVehicle.title": "My vehicles",
-  "transportVehicle.vehicleType": "Vehicle type"
+  "transportVehicle.vehicleType": "Vehicle type",
+  "validation.title": "Missing required details",
+  "validation.message": "Please fill in the following before you continue:\n{fields}"
 }

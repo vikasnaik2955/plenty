@@ -18,6 +18,7 @@ import { Text } from '@/components/ui/text';
 import { useT } from '@/i18n/use-t';
 import { useApp } from '@/store/app-store';
 import { colors, radius, shadows, space } from '@/theme';
+import { requireFields } from '@/utils/validation';
 
 export default function TransportVerify() {
   const router = useRouter();
@@ -30,9 +31,16 @@ export default function TransportVerify() {
   const [contact, setContact] = useState(v.contact);
   const [photo, setPhoto] = useState<string | undefined>(v.licensePhoto);
 
-  const valid = fullName.trim().length > 0 && license.trim().length >= 6 && contact.trim().length > 0;
   const submit = () => {
-    if (!valid) return;
+    const ok = requireFields(
+      [
+        { value: fullName, label: t('transportVerify.fullName') },
+        { value: license.trim().length >= 6 ? 'ok' : '', label: t('transportVerify.licenseNumber') },
+        { value: contact, label: t('transportVerify.contactNumber') },
+      ],
+      t,
+    );
+    if (!ok) return;
     s.submitVerification({
       fullName: fullName.trim(),
       license: license.trim(),
@@ -66,7 +74,7 @@ export default function TransportVerify() {
             {t('common.done')}
           </Button>
         ) : (
-          <Button fullWidth size="lg" leftIcon="shield-check" disabled={!valid} onPress={submit}>
+          <Button fullWidth size="lg" leftIcon="shield-check" onPress={submit}>
             {v.status === 'pending' ? t('transportVerify.resubmit') : t('transportVerify.submit')}
           </Button>
         )

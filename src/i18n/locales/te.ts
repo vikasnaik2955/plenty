@@ -1,5 +1,7 @@
 /** Telugu (తెలుగు) translations. Missing keys fall back to English. */
 export const te: Record<string, string> = {
+  "validation.title": "అవసరమైన వివరాలు అసంపూర్ణం",
+  "validation.message": "కొనసాగడానికి ముందు దయచేసి వీటిని పూరించండి:\n{fields}",
   "addresses.addAddress": "చిరునామా జోడించు",
   "addresses.default": "డిఫాల్ట్",
   "addresses.editAddress": "చిరునామా సవరించు",

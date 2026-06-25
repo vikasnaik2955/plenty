@@ -813,4 +813,6 @@ export const en = {
   "volTeam.teamMembers": "Team members · {count}",
   "volTeam.title": "Your team",
   "volTeam.tripsCount": "{count} trips",
+  "validation.title": "Missing required details",
+  "validation.message": "Please fill in the following before you continue:\n{fields}",
 } as const;

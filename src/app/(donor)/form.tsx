@@ -24,6 +24,7 @@ import { useT, type TFunction } from '@/i18n/use-t';
 import { useApp } from '@/store/app-store';
 import { colors, radius } from '@/theme';
 import { formatDateTime } from '@/utils/datetime';
+import { requireFields } from '@/utils/validation';
 
 const OPTIONS = [
   { val: true, icon: 'bike', titleKey: 'donorForm.volYesTitle', descKey: 'donorForm.volYesDesc' },
@@ -94,11 +95,24 @@ export default function DonorForm() {
 
   const [photo, setPhoto] = useState<string | undefined>(undefined);
 
-  const typeChosen = isFood ? !!foodType : !!clothType;
-  const ready = needsVolunteer != null && typeChosen;
-
   const onContinue = () => {
-    if (!ready) return;
+    // Block submit until every required (*) field is filled, naming the gaps.
+    const required = [
+      { value: needsVolunteer == null ? '' : 'ok', label: t('donorForm.volunteerQuestion') },
+      ...(isFood
+        ? [
+            { value: serves, label: t('donorForm.servesLabel') },
+            { value: foodType, label: t('donorForm.foodTypeLabel') },
+            ...(foodType === 'other' ? [{ value: foodOther, label: t('donorForm.otherFoodTypeLabel') }] : []),
+          ]
+        : [
+            { value: clothType, label: t('donorForm.clothTypeLabel') },
+            ...(clothType === 'other' ? [{ value: clothOther, label: t('donorForm.otherClothTypeLabel') }] : []),
+            { value: condition, label: t('donorForm.conditionLabel') },
+          ]),
+      { value: photo ?? '', label: t('donorForm.photoEvidence') },
+    ];
+    if (!requireFields(required, t)) return;
     if (isFood) {
       const title = foodType === 'other' ? foodOther.trim() || t('donorForm.foodFallback') : labelOf(FOOD_TYPES, foodType, t);
       s.setDraft({
@@ -136,20 +150,8 @@ export default function DonorForm() {
         />
       }
       footer={
-        <Button
-          fullWidth
-          size="lg"
-          disabled={!ready}
-          onPress={onContinue}
-          style={ready ? { backgroundColor: accent } : undefined}
-        >
-          {needsVolunteer == null
-            ? t('donorForm.chooseDeliveryOption')
-            : !typeChosen
-              ? isFood
-                ? t('donorForm.chooseFoodType')
-                : t('donorForm.chooseClothingType')
-              : t('donorForm.findRecipients')}
+        <Button fullWidth size="lg" onPress={onContinue} style={{ backgroundColor: accent }}>
+          {t('donorForm.findRecipients')}
         </Button>
       }
     >

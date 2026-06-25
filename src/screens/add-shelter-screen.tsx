@@ -19,6 +19,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useT } from '@/i18n/use-t';
 import { useApp } from '@/store/app-store';
 import { colors, radius, space } from '@/theme';
+import { requireFields } from '@/utils/validation';
 
 // `value` is the stored shelter type (kept English so saved data is stable
 // across languages); only the visible `label` is translated per-render.
@@ -59,10 +60,18 @@ export function AddShelterScreen() {
   const [notes, setNotes] = useState('');
 
   const peopleNum = parseInt(people, 10);
-  const valid = name.trim().length > 0 && peopleNum > 0 && address.trim().length > 0;
 
   const save = () => {
-    if (!valid) return;
+    const ok = requireFields(
+      [
+        { value: name, label: t('addShelter.placeLabel') },
+        { value: type, label: t('addShelter.typeLabel') },
+        { value: peopleNum, label: t('addShelter.peopleLabel') },
+        { value: address, label: t('addShelter.addressLabel') },
+      ],
+      t,
+    );
+    if (!ok) return;
     const distNum = parseFloat(distance);
     s.addConsumer({
       name,
@@ -81,16 +90,9 @@ export function AddShelterScreen() {
     <Page
       header={<AppBar title={t('addShelter.title')} onBack={() => router.back()} />}
       footer={
-        <View style={{ gap: space[2] }}>
-          {!valid && (
-            <Text variant="caption" color={colors.textMuted} align="center">
-              {t('addShelter.validationHint')}
-            </Text>
-          )}
-          <Button fullWidth size="lg" disabled={!valid} onPress={save} leftIcon="building-2">
-            {t('addShelter.save')}
-          </Button>
-        </View>
+        <Button fullWidth size="lg" onPress={save} leftIcon="building-2">
+          {t('addShelter.save')}
+        </Button>
       }
     >
       <View style={styles.intro}>

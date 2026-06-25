@@ -1,5 +1,7 @@
 /** Gujarati (ગુજરાતી) translations. Missing keys fall back to English. */
 export const gu: Record<string, string> = {
+  "validation.title": "જરૂરી વિગતો અધૂરી",
+  "validation.message": "આગળ વધતા પહેલાં કૃપા કરીને આ ભરો:\n{fields}",
   "addresses.addAddress": "સરનામું ઉમેરો",
   "addresses.default": "ડિફોલ્ટ",
   "addresses.editAddress": "સરનામું બદલો",

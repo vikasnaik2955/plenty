@@ -1,5 +1,7 @@
 /** Kannada (ಕನ್ನಡ) translations. Missing keys fall back to English. */
 export const kn: Record<string, string> = {
+  "validation.title": "ಅಗತ್ಯ ವಿವರಗಳು ಅಪೂರ್ಣ",
+  "validation.message": "ಮುಂದುವರಿಯುವ ಮೊದಲು ದಯವಿಟ್ಟು ಇವುಗಳನ್ನು ಭರ್ತಿ ಮಾಡಿ:\n{fields}",
   "addresses.addAddress": "ವಿಳಾಸ ಸೇರಿಸಿ",
   "addresses.default": "ಡೀಫಾಲ್ಟ್",
   "addresses.editAddress": "ವಿಳಾಸ ತಿದ್ದಿ",

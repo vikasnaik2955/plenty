@@ -1,5 +1,7 @@
 /** Hindi (हिन्दी) translations. Missing keys fall back to English. */
 export const hi: Record<string, string> = {
+  "validation.title": "आवश्यक जानकारी अधूरी",
+  "validation.message": "जारी रखने से पहले कृपया ये भरें:\n{fields}",
   "addresses.addAddress": "पता जोड़ें",
   "addresses.default": "डिफ़ॉल्ट",
   "addresses.editAddress": "पता संपादित करें",
