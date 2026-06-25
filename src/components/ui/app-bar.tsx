@@ -5,6 +5,7 @@
 import { type StyleProp, View, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useT } from '@/i18n/use-t';
 import { colors, fontSize, layout, radius } from '@/theme';
 
 import { Icon } from './icon';
@@ -27,6 +28,7 @@ export interface AppBarProps {
 
 export function AppBar({ title, subtitle, onBack, action, align = 'left', transparent = false, style }: AppBarProps) {
   const insets = useSafeAreaInsets();
+  const t = useT();
   return (
     <View
       style={[
@@ -50,7 +52,7 @@ export function AppBar({ title, subtitle, onBack, action, align = 'left', transp
         <PressableScale
           onPress={onBack}
           accessibilityRole="button"
-          accessibilityLabel="Back"
+          accessibilityLabel={t('common.back')}
           style={{
             width: 44,
             height: 44,

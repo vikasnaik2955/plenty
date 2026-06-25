@@ -6,6 +6,7 @@
 import { Modal, Pressable, ScrollView, type StyleProp, View, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useT } from '@/i18n/use-t';
 import { colors, radius, shadows } from '@/theme';
 
 import { Icon } from './icon';
@@ -23,6 +24,7 @@ export interface BottomSheetProps {
 
 export function BottomSheet({ open, title, onClose, children, footer, style }: BottomSheetProps) {
   const insets = useSafeAreaInsets();
+  const t = useT();
 
   return (
     <Modal visible={open} transparent animationType="slide" onRequestClose={onClose}>
@@ -73,7 +75,7 @@ export function BottomSheet({ open, title, onClose, children, footer, style }: B
               <Pressable
                 onPress={onClose}
                 accessibilityRole="button"
-                accessibilityLabel="Close"
+                accessibilityLabel={t('common.close')}
                 style={{
                   width: 36,
                   height: 36,

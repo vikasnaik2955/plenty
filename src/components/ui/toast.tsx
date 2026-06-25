@@ -5,6 +5,7 @@
  */
 import { Pressable, type StyleProp, View, type ViewStyle } from 'react-native';
 
+import { useT } from '@/i18n/use-t';
 import { colors, fontSize, palette, radius, shadows } from '@/theme';
 
 import { Icon } from './icon';
@@ -33,6 +34,7 @@ export interface ToastProps {
 }
 
 export function Toast({ message, tone = 'info', icon, action, onAction, onClose, style }: ToastProps) {
+  const tr = useT();
   const t = TONES[tone] ?? TONES.info;
   const dark = tone === 'info';
   const iconColor = dark ? '#fff' : t.fg;
@@ -69,7 +71,7 @@ export function Toast({ message, tone = 'info', icon, action, onAction, onClose,
         </Pressable>
       )}
       {onClose && (
-        <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="Dismiss">
+        <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel={tr('common.close')}>
           <Icon name="x" size={16} color={dark ? 'rgba(255,255,255,0.7)' : colors.textMuted} />
         </Pressable>
       )}

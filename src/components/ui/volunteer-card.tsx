@@ -4,6 +4,7 @@
  */
 import { type StyleProp, View, type ViewStyle } from 'react-native';
 
+import { useT } from '@/i18n/use-t';
 import { colors, fontSize, radius, shadows } from '@/theme';
 
 import { Avatar } from './avatar';
@@ -30,7 +31,7 @@ export interface VolunteerCardProps {
 
 export function VolunteerCard({
   name,
-  role = 'Volunteer',
+  role,
   phone,
   rating,
   distance,
@@ -39,6 +40,7 @@ export function VolunteerCard({
   onMessage,
   style,
 }: VolunteerCardProps) {
+  const t = useT();
   return (
     <View
       style={[
@@ -63,7 +65,7 @@ export function VolunteerCard({
         </Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 12, rowGap: 2, marginTop: 3 }}>
           <Text size={fontSize.caption} color={colors.textMuted}>
-            {role}
+            {role || t('role.volunteer')}
           </Text>
           {rating != null && (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
@@ -93,7 +95,7 @@ export function VolunteerCard({
           <PressableScale
             onPress={onMessage}
             accessibilityRole="button"
-            accessibilityLabel="Message"
+            accessibilityLabel={t('common.message')}
             style={iconBtn(colors.surfaceSunken)}
           >
             <Icon name="message-circle" size={18} color={colors.textPrimary} />
@@ -103,7 +105,7 @@ export function VolunteerCard({
           <PressableScale
             onPress={onCall}
             accessibilityRole="button"
-            accessibilityLabel="Call"
+            accessibilityLabel={t('common.call')}
             style={iconBtn(colors.brand)}
           >
             <Icon name="phone" size={18} color="#fff" />
