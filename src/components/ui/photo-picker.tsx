@@ -27,6 +27,10 @@ export interface PhotoPickerProps {
   label?: string;
   /** Accent color when filled / for the placeholder icon. @default brand */
   accent?: string;
+  /** Show the native crop/adjust editor after picking. Defaults on for circular (avatar) pickers. */
+  allowsEditing?: boolean;
+  /** Crop aspect ratio when editing, e.g. [1, 1] for a square profile photo. */
+  aspect?: [number, number];
   style?: StyleProp<ViewStyle>;
 }
 
@@ -37,11 +41,16 @@ export function PhotoPicker({
   size = 96,
   label,
   accent = colors.brand,
+  allowsEditing,
+  aspect,
   style,
 }: PhotoPickerProps) {
   const t = useT();
   const resolvedLabel = label ?? t('photoPicker.addPhoto');
   const br = shape === 'circle' ? size / 2 : radius.md;
+  // Circular (avatar) pickers crop to a square by default so the photo fits.
+  const editing = allowsEditing ?? shape === 'circle';
+  const cropAspect: [number, number] | undefined = aspect ?? (shape === 'circle' ? [1, 1] : undefined);
 
   const takePhoto = async () => {
     const perm = await ImagePicker.requestCameraPermissionsAsync();
@@ -49,14 +58,14 @@ export function PhotoPicker({
       Alert.alert(t('photoPicker.cameraAccessTitle'), t('photoPicker.cameraAccessMessage'));
       return;
     }
-    const result = await ImagePicker.launchCameraAsync({ mediaTypes: 'images', quality: 0.8 });
+    const result = await ImagePicker.launchCameraAsync({ mediaTypes: 'images', quality: 0.8, allowsEditing: editing, aspect: cropAspect });
     if (!result.canceled && result.assets?.[0]?.uri) {
       onPick(result.assets[0].uri);
     }
   };
 
   const pickFromGallery = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: 'images', quality: 0.8 });
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: 'images', quality: 0.8, allowsEditing: editing, aspect: cropAspect });
     if (!result.canceled && result.assets?.[0]?.uri) {
       onPick(result.assets[0].uri);
     }
