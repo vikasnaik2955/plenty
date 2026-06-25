@@ -12,6 +12,7 @@ import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { Icon } from '@/components/ui/icon';
 import { SectionHeader } from '@/components/ui/section-header';
 import { Text } from '@/components/ui/text';
+import { useT } from '@/i18n/use-t';
 import { colors, radius, shadows, space } from '@/theme';
 import { callNumber } from '@/utils/contact';
 import type { TaskHelper } from '@/data/types';
@@ -29,7 +30,7 @@ export function TeamSection({
   candidates,
   onAdd,
   onRemove,
-  addLabel = 'Add volunteer',
+  addLabel: addLabelProp,
 }: {
   title: string;
   members: TaskHelper[];
@@ -39,6 +40,8 @@ export function TeamSection({
   addLabel?: string;
 }) {
   const router = useRouter();
+  const t = useT();
+  const addLabel = addLabelProp ?? t('teamSection.addVolunteer');
   const [adding, setAdding] = useState(false);
 
   const chat = (name: string, phone?: string) =>
@@ -59,13 +62,13 @@ export function TeamSection({
                 {m.name}
               </Text>
               <Text size={12} color={colors.textMuted}>
-                Added by {m.addedBy}
+                {t('teamSection.addedBy', { name: m.addedBy })}
               </Text>
             </View>
             <Pressable
               onPress={() => chat(m.name, m.contact)}
               accessibilityRole="button"
-              accessibilityLabel={`Message ${m.name}`}
+              accessibilityLabel={t('teamSection.messagePerson', { name: m.name })}
               style={[styles.iconBtn, { backgroundColor: colors.surfaceSunken }]}
             >
               <Icon name="message-circle" size={17} color={colors.textPrimary} />
@@ -73,7 +76,7 @@ export function TeamSection({
             <Pressable
               onPress={() => callNumber(m.contact)}
               accessibilityRole="button"
-              accessibilityLabel={`Call ${m.name}`}
+              accessibilityLabel={t('teamSection.callPerson', { name: m.name })}
               style={[styles.iconBtn, { backgroundColor: colors.brand }]}
             >
               <Icon name="phone" size={17} color="#fff" />
@@ -81,7 +84,7 @@ export function TeamSection({
             <Pressable
               onPress={() => onRemove(m.id)}
               accessibilityRole="button"
-              accessibilityLabel={`Remove ${m.name}`}
+              accessibilityLabel={t('teamSection.removePerson', { name: m.name })}
               style={[styles.iconBtn, { backgroundColor: colors.surfaceSunken }]}
             >
               <Icon name="x" size={17} color={colors.textSecondary} />
@@ -108,7 +111,7 @@ export function TeamSection({
         {available.length === 0 ? (
           <View style={styles.empty}>
             <Text variant="sm" color={colors.textMuted} align="center">
-              No more volunteers to add right now.
+              {t('teamSection.noneLeft')}
             </Text>
           </View>
         ) : (

@@ -18,6 +18,7 @@ import { Page } from '@/components/ui/page';
 import { SectionHeader } from '@/components/ui/section-header';
 import { Text } from '@/components/ui/text';
 import { VolunteerCard } from '@/components/ui/volunteer-card';
+import { useT } from '@/i18n/use-t';
 import { useApp } from '@/store/app-store';
 import { colors, leading, radius, shadows, space } from '@/theme';
 import { callNumber } from '@/utils/contact';
@@ -25,6 +26,7 @@ import type { Volunteer } from '@/data/types';
 
 export default function VolTeam() {
   const router = useRouter();
+  const t = useT();
   const s = useApp();
 
   const openChat = (v: Volunteer) =>
@@ -58,25 +60,28 @@ export default function VolTeam() {
       nav={<RoleBottomNav role="volunteer" active="team" />}
       header={
         <AppBar
-          title="Your team"
+          title={t('volTeam.title')}
           align="center"
           action={
             <Pressable onPress={() => setAdding(true)} hitSlop={8} accessibilityRole="button">
               <Text size={14} weight={700} color={colors.brandStrong}>
-                Add
+                {t('common.add')}
               </Text>
             </Pressable>
           }
         />
       }
     >
-      <SectionHeader title={`Team members · ${s.team.length}`} style={{ marginTop: 4 }} />
+      <SectionHeader
+        title={t('volTeam.teamMembers', { count: s.team.length })}
+        style={{ marginTop: 4 }}
+      />
       <View style={{ gap: 10 }}>
         {s.team.map((v) => (
           <VolunteerCard
             key={v.id}
             name={v.name}
-            role={`${v.trips} trips`}
+            role={t('volTeam.tripsCount', { count: v.trips })}
             rating={v.rating ? v.rating : undefined}
             distance={v.distance ? v.distance : undefined}
             phone={v.contact}
@@ -87,18 +92,18 @@ export default function VolTeam() {
         ))}
       </View>
 
-      <SectionHeader title="Suggested nearby · within 15 km" />
+      <SectionHeader title={t('volTeam.suggestedNearby')} />
       <Text
         variant="sm"
         color={colors.textSecondary}
         style={{ marginTop: -4, marginBottom: space[3], lineHeight: 13 * leading.normal }}
       >
-        Plenty volunteers near you. Invite them to join your team.
+        {t('volTeam.suggestedNearbyHint')}
       </Text>
       {nearby.length === 0 ? (
         <View style={styles.emptyBox}>
           <Text variant="sm" color={colors.textMuted} align="center">
-            No new volunteers nearby right now.
+            {t('volTeam.noNearby')}
           </Text>
         </View>
       ) : (
@@ -111,11 +116,11 @@ export default function VolTeam() {
 
       <BottomSheet
         open={adding}
-        title="Add team member"
+        title={t('volTeam.addMember')}
         onClose={() => setAdding(false)}
         footer={
           <Button fullWidth size="lg" disabled={!name.trim()} onPress={submit}>
-            Send invite
+            {t('volTeam.sendInvite')}
           </Button>
         }
       >
@@ -124,18 +129,18 @@ export default function VolTeam() {
           color={colors.textSecondary}
           style={{ marginBottom: space[3] + 2, lineHeight: 14 * leading.normal }}
         >
-          Invite someone to volunteer with your team. They&apos;ll get a request to join.
+          {t('volTeam.inviteBody')}
         </Text>
         <View style={{ gap: space[3] + 2 }}>
           <Input
-            label="Name"
+            label={t('volTeam.nameLabel')}
             value={name}
             onChangeText={setName}
-            placeholder="Full name"
+            placeholder={t('volTeam.namePlaceholder')}
             leftIcon={<Icon name="user" size={18} color={colors.textMuted} />}
           />
           <Input
-            label="Contact"
+            label={t('volTeam.contactLabel')}
             value={contact}
             onChangeText={setContact}
             placeholder="+91"
@@ -149,6 +154,7 @@ export default function VolTeam() {
 }
 
 function SuggestionRow({ volunteer, onAdd }: { volunteer: Volunteer; onAdd: () => void }) {
+  const t = useT();
   return (
     <View style={styles.suggRow}>
       <Avatar name={volunteer.name} accent="brand" />
@@ -166,7 +172,7 @@ function SuggestionRow({ volunteer, onAdd }: { volunteer: Volunteer; onAdd: () =
           <View style={styles.metaItem}>
             <Icon name="navigation" size={12} color={colors.textSecondary} />
             <Text size={12} color={colors.textSecondary}>
-              {volunteer.distance} km away
+              {t('volTeam.kmAway', { distance: volunteer.distance })}
             </Text>
           </View>
         </View>
@@ -174,7 +180,7 @@ function SuggestionRow({ volunteer, onAdd }: { volunteer: Volunteer; onAdd: () =
       <Pressable onPress={onAdd} accessibilityRole="button" style={styles.addBtn}>
         <Icon name="user-plus" size={16} color={colors.brandStrong} />
         <Text size={14} weight={700} color={colors.brandStrong}>
-          Add
+          {t('common.add')}
         </Text>
       </Pressable>
     </View>

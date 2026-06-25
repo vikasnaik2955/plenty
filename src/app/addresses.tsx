@@ -17,15 +17,22 @@ import { Page } from '@/components/ui/page';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Text } from '@/components/ui/text';
 import { Textarea } from '@/components/ui/textarea';
+import { useT } from '@/i18n/use-t';
 import { useApp } from '@/store/app-store';
 import { colors, radius, shadows, space } from '@/theme';
 import type { SavedAddress } from '@/data/types';
 
 const QUICK_LABELS = ['Home', 'Work', 'Other'];
+const QUICK_LABEL_KEY: Record<string, string> = {
+  Home: 'addresses.quickHome',
+  Work: 'addresses.quickWork',
+  Other: 'addresses.quickOther',
+};
 const LABEL_ICON: Record<string, string> = { Home: 'house', Work: 'briefcase' };
 
 export default function AddressesScreen() {
   const router = useRouter();
+  const t = useT();
   const s = useApp();
 
   const [editing, setEditing] = useState<SavedAddress | 'new' | null>(null);
@@ -53,18 +60,18 @@ export default function AddressesScreen() {
 
   return (
     <Page
-      header={<AppBar title="Saved addresses" onBack={() => router.back()} />}
+      header={<AppBar title={t('addresses.title')} onBack={() => router.back()} />}
       footer={
         <Button fullWidth size="lg" leftIcon="plus" onPress={openNew}>
-          Add address
+          {t('addresses.addAddress')}
         </Button>
       }
     >
       {s.addresses.length === 0 ? (
         <EmptyState
           icon="map-pin"
-          title="No saved addresses"
-          message="Add a pickup or delivery address so it's ready when you donate."
+          title={t('addresses.emptyTitle')}
+          message={t('addresses.emptyMessage')}
         />
       ) : (
         <View style={{ gap: 10 }}>
@@ -79,7 +86,7 @@ export default function AddressesScreen() {
                 </Text>
                 {a.isDefault && (
                   <StatusBadge tone="success" dot={false} size="sm">
-                    Default
+                    {t('addresses.default')}
                   </StatusBadge>
                 )}
               </View>
@@ -91,20 +98,20 @@ export default function AddressesScreen() {
                   <Pressable onPress={() => s.setDefaultAddress(a.id)} style={styles.action} accessibilityRole="button">
                     <Icon name="check-circle" size={16} color={colors.brandStrong} />
                     <Text size={13} weight={700} color={colors.brandStrong}>
-                      Set default
+                      {t('addresses.setDefault')}
                     </Text>
                   </Pressable>
                 )}
                 <Pressable onPress={() => openEdit(a)} style={styles.action} accessibilityRole="button">
                   <Icon name="pencil" size={16} color={colors.textSecondary} />
                   <Text size={13} weight={700} color={colors.textSecondary}>
-                    Edit
+                    {t('common.edit')}
                   </Text>
                 </Pressable>
                 <Pressable onPress={() => s.removeAddress(a.id)} style={styles.action} accessibilityRole="button">
                   <Icon name="trash-2" size={16} color={colors.error} />
                   <Text size={13} weight={700} color={colors.error}>
-                    Delete
+                    {t('common.delete')}
                   </Text>
                 </Pressable>
               </View>
@@ -115,39 +122,39 @@ export default function AddressesScreen() {
 
       <BottomSheet
         open={!!editing}
-        title={editing === 'new' ? 'Add address' : 'Edit address'}
+        title={editing === 'new' ? t('addresses.addAddress') : t('addresses.editAddress')}
         onClose={() => setEditing(null)}
         footer={
           <Button fullWidth size="lg" disabled={!valid} onPress={save}>
-            {editing === 'new' ? 'Save address' : 'Save changes'}
+            {editing === 'new' ? t('addresses.saveAddress') : t('addresses.saveChanges')}
           </Button>
         }
       >
         <View style={{ gap: space[4] }}>
           <View>
             <Text variant="sm" weight={600} color={colors.textSecondary} style={{ marginBottom: 8 }}>
-              Label
+              {t('addresses.labelHeading')}
             </Text>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {QUICK_LABELS.map((l) => (
                 <Chip key={l} selected={label === l} accent="brand" onPress={() => setLabel(l)}>
-                  {l}
+                  {t(QUICK_LABEL_KEY[l])}
                 </Chip>
               ))}
             </View>
           </View>
           <Input
-            label="Name this address"
+            label={t('addresses.nameLabel')}
             value={label}
             onChangeText={setLabel}
-            placeholder="Home, Work, Mom's place…"
+            placeholder={t('addresses.namePlaceholder')}
             leftIcon={<Icon name="tag" size={18} color={colors.textMuted} />}
           />
           <Textarea
-            label="Full address"
+            label={t('addresses.fullAddress')}
             value={address}
             onChangeText={setAddress}
-            placeholder="Flat / house, street, area, city, PIN"
+            placeholder={t('addresses.fullAddressPlaceholder')}
             maxLength={160}
           />
         </View>

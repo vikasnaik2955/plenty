@@ -12,10 +12,12 @@ import { DonationCard, type DonationMeta } from '@/components/ui/donation-card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Page } from '@/components/ui/page';
 import { Tabs } from '@/components/ui/tabs';
+import { useT } from '@/i18n/use-t';
 import { useApp } from '@/store/app-store';
 
 export default function DonorHistory() {
   const router = useRouter();
+  const t = useT();
   const s = useApp();
   const [filter, setFilter] = useState('all');
 
@@ -26,16 +28,16 @@ export default function DonorHistory() {
   return (
     <Page
       nav={<RoleBottomNav role="donor" active="history" />}
-      header={<AppBar title="Donation history" align="center" />}
+      header={<AppBar title={t('donorHistory.title')} align="center" />}
     >
       <Tabs
         variant="underline"
         active={filter}
         onChange={setFilter}
         items={[
-          { key: 'all', label: 'All' },
-          { key: 'food', label: 'Food' },
-          { key: 'clothes', label: 'Clothes' },
+          { key: 'all', label: t('donorHistory.tabAll') },
+          { key: 'food', label: t('donorHistory.tabFood') },
+          { key: 'clothes', label: t('donorHistory.tabClothes') },
         ]}
         style={{ marginBottom: 14 }}
       />
@@ -43,14 +45,14 @@ export default function DonorHistory() {
         <EmptyState
           compact
           icon="inbox"
-          title="Nothing here yet"
-          message="Donations you make will show up here."
+          title={t('donorHistory.emptyTitle')}
+          message={t('donorHistory.emptyMessage')}
         />
       ) : (
         <View style={{ gap: 10 }}>
           {list.map((d) => {
             const meta: DonationMeta[] = [
-              { icon: 'users', label: d.serves ? `Serves ${d.serves}` : (d.pieces ?? '') },
+              { icon: 'users', label: d.serves ? t('donorHistory.serves', { count: d.serves }) : (d.pieces ?? '') },
             ];
             if (d.points) meta.push({ icon: 'award', label: `+${d.points}` });
             return (

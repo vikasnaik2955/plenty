@@ -9,12 +9,14 @@ import { Page } from '@/components/ui/page';
 import { Icon } from '@/components/ui/icon';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { Text } from '@/components/ui/text';
+import { useT } from '@/i18n/use-t';
 import { ROLES } from '@/navigation/roles-meta';
 import { useApp } from '@/store/app-store';
 import { colors, radius, shadows, space } from '@/theme';
 
 export default function RolesScreen() {
   const router = useRouter();
+  const t = useT();
   const { setPendingRole } = useApp();
 
   const pick = (key: (typeof ROLES)[number]['key']) => {
@@ -25,9 +27,9 @@ export default function RolesScreen() {
   return (
     <Page>
       <View style={{ paddingTop: space[3] }}>
-        <Text variant="h2">Join as…</Text>
+        <Text variant="h2">{t('roleSelect.title')}</Text>
         <Text variant="body" color={colors.textSecondary} style={styles.sub}>
-          Choose how you&apos;d like to use Plenty. You can switch anytime.
+          {t('roleSelect.subtitle')}
         </Text>
         <View style={{ gap: space[3] }}>
           {ROLES.map((r) => (
@@ -37,10 +39,10 @@ export default function RolesScreen() {
               </View>
               <View style={{ flex: 1 }}>
                 <Text variant="lg" weight={700}>
-                  {r.label}
+                  {t(`role.${r.key}`)}
                 </Text>
                 <Text variant="caption" color={colors.textSecondary}>
-                  {r.desc}
+                  {t(`roleSelect.desc.${r.key}`)}
                 </Text>
               </View>
               <Icon name="chevron-right" size={22} color={colors.textMuted} />

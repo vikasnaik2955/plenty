@@ -14,11 +14,13 @@ import { Input } from '@/components/ui/input';
 import { Page } from '@/components/ui/page';
 import { Text } from '@/components/ui/text';
 import { Textarea } from '@/components/ui/textarea';
+import { useT } from '@/i18n/use-t';
 import { useApp } from '@/store/app-store';
 import { colors, fontSize } from '@/theme';
 
 export default function ConNeed() {
   const router = useRouter();
+  const t = useT();
   const s = useApp();
   const [prefs, setPrefs] = useState<string[]>(['food']);
 
@@ -27,27 +29,27 @@ export default function ConNeed() {
 
   const save = () => {
     s.markNeedUpdated();
-    s.showToast('Need updated', 'success');
+    s.showToast(t('conNeed.needUpdated'), 'success');
     router.back();
   };
 
   return (
     <Page
-      header={<AppBar title="Register need" onBack={() => router.back()} />}
+      header={<AppBar title={t('conNeed.title')} onBack={() => router.back()} />}
       footer={
         <Button fullWidth size="lg" onPress={save}>
-          Save need
+          {t('conNeed.saveNeed')}
         </Button>
       }
     >
       <View style={styles.form}>
         <Input
-          label="Place / organization"
+          label={t('conNeed.placeOrg')}
           defaultValue="Hope Shelter"
           leftIcon={<Icon name="building-2" size={18} color={colors.textMuted} />}
         />
         <Input
-          label="Number of people"
+          label={t('conNeed.numberOfPeople')}
           defaultValue="40"
           required
           keyboardType="number-pad"
@@ -55,7 +57,7 @@ export default function ConNeed() {
         />
         <View>
           <Text size={fontSize.sm} weight={600} color={colors.textSecondary} style={{ marginBottom: 8 }}>
-            Category preference
+            {t('conNeed.categoryPreference')}
           </Text>
           <View style={styles.chips}>
             <Chip
@@ -64,7 +66,7 @@ export default function ConNeed() {
               leftIcon={<Icon name="utensils" size={15} color={prefs.includes('food') ? colors.food : colors.textSecondary} />}
               onPress={() => toggle('food')}
             >
-              Food
+              {t('conNeed.food')}
             </Chip>
             <Chip
               selected={prefs.includes('clothes')}
@@ -72,20 +74,20 @@ export default function ConNeed() {
               leftIcon={<Icon name="shirt" size={15} color={prefs.includes('clothes') ? colors.clothes : colors.textSecondary} />}
               onPress={() => toggle('clothes')}
             >
-              Clothes
+              {t('conNeed.clothes')}
             </Chip>
           </View>
         </View>
         <Input
-          label="Contact"
+          label={t('conNeed.contact')}
           defaultValue="+91 98990 11020"
           keyboardType="phone-pad"
           leftIcon={<Icon name="phone" size={18} color={colors.textMuted} />}
         />
         <Textarea
-          label="Notes for donors"
+          label={t('conNeed.notesForDonors')}
           maxLength={140}
-          placeholder="We can receive deliveries between 11 AM and 9 PM."
+          placeholder={t('conNeed.notesPlaceholder')}
         />
       </View>
     </Page>

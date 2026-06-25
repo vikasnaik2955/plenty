@@ -5,6 +5,7 @@
  */
 import { type DimensionValue, type StyleProp, View, type ViewStyle } from 'react-native';
 
+import { useT } from '@/i18n/use-t';
 import { colors, radius, shadows } from '@/theme';
 
 import { Icon } from './icon';
@@ -32,6 +33,7 @@ export interface MapPlaceholderProps {
 }
 
 export function MapPlaceholder({ pins = [], radiusLabel = '10 km', height = 220, style }: MapPlaceholderProps) {
+  const t = useT();
   return (
     <View
       style={[
@@ -110,7 +112,7 @@ export function MapPlaceholder({ pins = [], radiusLabel = '10 km', height = 220,
           ]}
         >
           <Text size={11} weight={800} color={colors.brandStrong}>
-            {radiusLabel} radius
+            {t('mapPlaceholder.radius', { value: radiusLabel })}
           </Text>
         </View>
       </View>

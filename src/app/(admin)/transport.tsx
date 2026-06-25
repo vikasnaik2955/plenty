@@ -20,6 +20,7 @@ import { Page } from '@/components/ui/page';
 import { Select } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
+import { useT } from '@/i18n/use-t';
 import { useApp } from '@/store/app-store';
 import { colors, radius, shadows, space } from '@/theme';
 import { formatRelative } from '@/utils/datetime';
@@ -37,7 +38,15 @@ interface VehicleForm {
   status: 'AVAILABLE' | 'BUSY';
 }
 
+const TYPE_KEY: Record<string, string> = {
+  'Two-wheeler': 'admTransport.typeTwoWheeler',
+  'Auto rickshaw': 'admTransport.typeAutoRickshaw',
+  'Cargo van': 'admTransport.typeCargoVan',
+  Car: 'admTransport.typeCar',
+};
+
 export default function AdmTransport() {
+  const t = useT();
   const s = useApp();
   const [fleet, setFleet] = useState<Transport[]>(s.data.TRANSPORT);
   const [filter, setFilter] = useState('all');
@@ -52,10 +61,10 @@ export default function AdmTransport() {
 
   const toggle = (id: string) =>
     setFleet(
-      fleet.map((t) =>
-        t.id === id
-          ? { ...t, status: t.status === 'AVAILABLE' ? 'BUSY' : 'AVAILABLE', updatedAt: Date.now() }
-          : t,
+      fleet.map((v) =>
+        v.id === id
+          ? { ...v, status: v.status === 'AVAILABLE' ? 'BUSY' : 'AVAILABLE', updatedAt: Date.now() }
+          : v,
       ),
     );
 
@@ -72,11 +81,11 @@ export default function AdmTransport() {
     const at = Date.now();
     if (editing === 'new') {
       setFleet((f) => [...f, { id: 't' + at, ...form, updatedAt: at }]);
-      s.showToast('Vehicle added', 'success');
+      s.showToast(t('admTransport.toastAdded'), 'success');
     } else if (editing) {
       const id = editing.id;
-      setFleet((f) => f.map((t) => (t.id === id ? { ...t, ...form, updatedAt: at } : t)));
-      s.showToast('Vehicle updated', 'success');
+      setFleet((f) => f.map((tt) => (tt.id === id ? { ...tt, ...form, updatedAt: at } : tt)));
+      s.showToast(t('admTransport.toastUpdated'), 'success');
     }
     setEditing(null);
   };
@@ -84,10 +93,10 @@ export default function AdmTransport() {
   const remove = () => {
     if (editing && editing !== 'new') {
       const id = editing.id;
-      setFleet((f) => f.filter((t) => t.id !== id));
+      setFleet((f) => f.filter((tt) => tt.id !== id));
     }
     setEditing(null);
-    s.showToast('Vehicle removed');
+    s.showToast(t('admTransport.toastRemoved'));
   };
 
   const counts = VEHICLE_TYPES.reduce<Record<string, number>>((m, ty) => {
@@ -102,13 +111,13 @@ export default function AdmTransport() {
       nav={<RoleBottomNav role="admin" active="transport" />}
       header={
         <AppBar
-          title="Transport"
+          title={t('admTransport.title')}
           align="center"
           action={
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <NotificationsButton tone="dark" />
               <MessagesButton tone="dark" />
-              <IconButton accessibilityLabel="Add vehicle" variant="brand" onPress={openNew}>
+              <IconButton accessibilityLabel={t('admTransport.addVehicle')} variant="brand" onPress={openNew}>
                 <Icon name="plus" size={20} color="#fff" />
               </IconButton>
             </View>
@@ -134,29 +143,31 @@ export default function AdmTransport() {
             }
             onPress={() => setFilter(ty)}
           >
-            {ty === 'all' ? `All · ${fleet.length}` : `${ty} · ${counts[ty]}`}
+            {ty === 'all'
+              ? `${t('admTransport.filterAll')} · ${fleet.length}`
+              : `${t(TYPE_KEY[ty])} · ${counts[ty]}`}
           </Chip>
         ))}
       </ScrollView>
 
       <View style={{ gap: 10 }}>
-        {filtered.map((t) => {
-          const avail = t.status === 'AVAILABLE';
+        {filtered.map((v) => {
+          const avail = v.status === 'AVAILABLE';
           return (
-            <View key={t.id} style={styles.row}>
+            <View key={v.id} style={styles.row}>
               <View style={styles.rowIcon}>
-                <Icon name={vIcon(t.type)} size={22} color={colors.textPrimary} />
+                <Icon name={vIcon(v.type)} size={22} color={colors.textPrimary} />
               </View>
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text size={15} weight={700}>
-                  {t.type}
+                  {t(TYPE_KEY[v.type] ?? '') || v.type}
                 </Text>
                 <Text mono size={12} color={colors.textMuted}>
-                  {t.plate} · {t.driver}
+                  {v.plate} · {v.driver}
                 </Text>
-                {t.updatedAt != null && (
+                {v.updatedAt != null && (
                   <Text size={11} color={colors.textMuted} style={{ marginTop: 1 }}>
-                    Updated {formatRelative(t.updatedAt)}
+                    {t('admTransport.updated', { time: formatRelative(v.updatedAt) })}
                   </Text>
                 )}
               </View>
@@ -168,14 +179,14 @@ export default function AdmTransport() {
                     color={avail ? colors.success : colors.warning}
                     style={{ marginBottom: 5 }}
                   >
-                    {t.status}
+                    {avail ? t('admTransport.available') : t('admTransport.busy')}
                   </Text>
-                  <Switch checked={avail} onChange={() => toggle(t.id)} />
+                  <Switch checked={avail} onChange={() => toggle(v.id)} />
                 </View>
                 <Pressable
-                  onPress={() => openEdit(t)}
+                  onPress={() => openEdit(v)}
                   accessibilityRole="button"
-                  accessibilityLabel="Edit vehicle"
+                  accessibilityLabel={t('admTransport.editVehicle')}
                   style={styles.editBtn}
                 >
                   <Icon name="pencil" size={16} color={colors.textSecondary} />
@@ -186,44 +197,46 @@ export default function AdmTransport() {
         })}
         {filtered.length === 0 && (
           <Text size={13} color={colors.textMuted} align="center" style={styles.empty}>
-            No {filter} vehicles.
+            {filter === 'all'
+              ? t('admTransport.emptyAll')
+              : t('admTransport.emptyType', { type: t(TYPE_KEY[filter] ?? '') || filter })}
           </Text>
         )}
       </View>
 
       <BottomSheet
         open={!!editing}
-        title={editing === 'new' ? 'Add vehicle' : 'Edit vehicle'}
+        title={editing === 'new' ? t('admTransport.addVehicle') : t('admTransport.editVehicle')}
         onClose={() => setEditing(null)}
         footer={
           <Button fullWidth size="lg" disabled={!form.plate.trim()} onPress={save}>
-            {editing === 'new' ? 'Add vehicle' : 'Save changes'}
+            {editing === 'new' ? t('admTransport.addVehicle') : t('admTransport.saveChanges')}
           </Button>
         }
       >
         <View style={{ gap: 14 }}>
           <Select
-            label="Vehicle type"
+            label={t('admTransport.vehicleType')}
             value={form.type}
             onValueChange={(value) => setForm((f) => ({ ...f, type: value }))}
-            options={VEHICLE_TYPES.map((ty) => ({ value: ty, label: ty }))}
+            options={VEHICLE_TYPES.map((ty) => ({ value: ty, label: t(TYPE_KEY[ty]) }))}
           />
           <Input
-            label="Plate number"
+            label={t('admTransport.plateNumber')}
             value={form.plate}
             onChangeText={(plate) => setForm((f) => ({ ...f, plate }))}
             placeholder="MH 02 AB 1234"
             leftIcon={<Icon name="hash" size={18} color={colors.textMuted} />}
           />
           <Input
-            label="Driver"
+            label={t('admTransport.driver')}
             value={form.driver}
             onChangeText={(driver) => setForm((f) => ({ ...f, driver }))}
-            placeholder="Name or Unassigned"
+            placeholder={t('admTransport.driverPlaceholder')}
             leftIcon={<Icon name="user" size={18} color={colors.textMuted} />}
           />
           <Switch
-            label="Available now"
+            label={t('admTransport.availableNow')}
             checked={form.status === 'AVAILABLE'}
             onChange={(v) => setForm((f) => ({ ...f, status: v ? 'AVAILABLE' : 'BUSY' }))}
           />
@@ -231,7 +244,7 @@ export default function AdmTransport() {
             <Pressable onPress={remove} style={styles.removeBtn}>
               <Icon name="trash-2" size={16} color={colors.error} />
               <Text size={14} weight={700} color={colors.error}>
-                Remove vehicle
+                {t('admTransport.removeVehicle')}
               </Text>
             </Pressable>
           )}

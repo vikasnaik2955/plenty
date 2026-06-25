@@ -9,24 +9,58 @@ import { AppBar } from '@/components/ui/app-bar';
 import { Icon } from '@/components/ui/icon';
 import { Page } from '@/components/ui/page';
 import { Text } from '@/components/ui/text';
+import { useT } from '@/i18n/use-t';
+import type { TFunction } from '@/i18n/use-t';
 import { colors, radius, statusColors } from '@/theme';
 
-const LOG = [
-  { icon: 'check-circle', accent: colors.success, text: 'Allocation #al2 completed', who: 'Meera Nair', time: '12 min ago' },
-  { icon: 'truck', accent: colors.info, text: 'Vehicle MH 02 CD 4490 set Available', who: 'System', time: '38 min ago' },
-  { icon: 'user-plus', accent: statusColors.accepted.fg, text: 'New volunteer onboarded', who: 'Daniel Joseph', time: '2 h ago' },
-  { icon: 'alert-triangle', accent: colors.warning, text: 'Request #al6 unassigned > 30 min', who: 'System', time: '3 h ago' },
-  { icon: 'flag', accent: colors.food, text: 'Allocation #al1 picked up', who: 'Ravi Kumar', time: '4 h ago' },
+const buildLog = (t: TFunction) => [
+  {
+    icon: 'check-circle',
+    accent: colors.success,
+    text: t('admAudit.allocationCompleted', { id: 'al2' }),
+    who: 'Meera Nair',
+    time: t('admAudit.minAgo', { count: 12 }),
+  },
+  {
+    icon: 'truck',
+    accent: colors.info,
+    text: t('admAudit.vehicleSetAvailable', { plate: 'MH 02 CD 4490' }),
+    who: t('admAudit.system'),
+    time: t('admAudit.minAgo', { count: 38 }),
+  },
+  {
+    icon: 'user-plus',
+    accent: statusColors.accepted.fg,
+    text: t('admAudit.volunteerOnboarded'),
+    who: 'Daniel Joseph',
+    time: t('admAudit.hoursAgo', { count: 2 }),
+  },
+  {
+    icon: 'alert-triangle',
+    accent: colors.warning,
+    text: t('admAudit.requestUnassigned', { id: 'al6' }),
+    who: t('admAudit.system'),
+    time: t('admAudit.hoursAgo', { count: 3 }),
+  },
+  {
+    icon: 'flag',
+    accent: colors.food,
+    text: t('admAudit.allocationPickedUp', { id: 'al1' }),
+    who: 'Ravi Kumar',
+    time: t('admAudit.hoursAgo', { count: 4 }),
+  },
 ];
 
 export default function AdmAudit() {
+  const t = useT();
+  const log = buildLog(t);
   return (
     <Page
       nav={<RoleBottomNav role="admin" active="audit" />}
-      header={<AppBar title="Audit log" align="center" />}
+      header={<AppBar title={t('admAudit.title')} align="center" />}
     >
       <View>
-        {LOG.map((l, i) => (
+        {log.map((l, i) => (
           <View key={i} style={styles.row}>
             <View style={styles.tile}>
               <Icon name={l.icon} size={18} color={l.accent} />

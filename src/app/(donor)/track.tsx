@@ -19,6 +19,7 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { Text } from '@/components/ui/text';
 import { Timeline, type TimelineStep } from '@/components/ui/timeline';
 import { VolunteerCard } from '@/components/ui/volunteer-card';
+import { useT } from '@/i18n/use-t';
 import { useApp } from '@/store/app-store';
 import { colors, palette, radius, shadows, space } from '@/theme';
 import { formatStamp } from '@/utils/datetime';
@@ -27,6 +28,7 @@ import type { Status } from '@/data/types';
 
 export default function DonorTrack() {
   const router = useRouter();
+  const t = useT();
   const s = useApp();
   const a = s.allocation;
 
@@ -40,9 +42,9 @@ export default function DonorTrack() {
 
   if (!a) {
     return (
-      <Page header={<AppBar title="Track donation" onBack={goHome} />}>
+      <Page header={<AppBar title={t('donorTrack.title')} onBack={goHome} />}>
         <Text variant="body" color={colors.textSecondary}>
-          No active donation.
+          {t('donorTrack.noActive')}
         </Text>
       </Page>
     );
@@ -68,28 +70,28 @@ export default function DonorTrack() {
   const stamp = (k: Status) => (ts[k] != null ? formatStamp(ts[k] as number) : undefined);
 
   const selfSteps: TimelineStep[] = [
-    { key: 'requested', label: 'Requested', time: stamp('requested') },
-    { key: 'delivered', label: 'Handover arranged', time: stamp('delivered') },
-    { key: 'completed', label: 'Completed', time: stamp('completed') },
+    { key: 'requested', label: t('status.requested'), time: stamp('requested') },
+    { key: 'delivered', label: t('donorTrack.stepHandoverArranged'), time: stamp('delivered') },
+    { key: 'completed', label: t('status.completed'), time: stamp('completed') },
   ];
   const volSteps: TimelineStep[] = [
-    { key: 'requested', label: 'Requested', time: stamp('requested') },
-    { key: 'accepted', label: 'Volunteer accepted', time: stamp('accepted') },
-    { key: 'picked_up', label: 'Picked up', time: stamp('picked_up') },
-    { key: 'delivered', label: 'Delivered', time: stamp('delivered') },
-    { key: 'completed', label: 'Completed', time: stamp('completed') },
+    { key: 'requested', label: t('status.requested'), time: stamp('requested') },
+    { key: 'accepted', label: t('donorTrack.stepVolunteerAccepted'), time: stamp('accepted') },
+    { key: 'picked_up', label: t('status.picked_up'), time: stamp('picked_up') },
+    { key: 'delivered', label: t('status.delivered'), time: stamp('delivered') },
+    { key: 'completed', label: t('status.completed'), time: stamp('completed') },
   ];
 
   const markHandover = () => {
     s.advanceAllocation('completed');
-    s.showToast('Handover confirmed · +30 points 🎉', 'success');
+    s.showToast(t('donorTrack.handoverConfirmed'), 'success');
   };
 
   let footer: React.ReactNode = null;
   if (selfHandover && a.current !== 'completed') {
     footer = (
       <Button fullWidth size="lg" onPress={markHandover} leftIcon="check">
-        Mark as handed over
+        {t('donorTrack.markHandedOver')}
       </Button>
     );
   } else if (isCancelled) {
@@ -101,7 +103,7 @@ export default function DonorTrack() {
         onPress={() => s.retryAllocation()}
         style={{ backgroundColor: accent }}
       >
-        Try again
+        {t('common.retry')}
       </Button>
     );
   } else if (isWaiting) {
@@ -111,18 +113,18 @@ export default function DonorTrack() {
         variant="destructive"
         onPress={() => {
           s.withdrawAllocation();
-          s.showToast('Request withdrawn');
+          s.showToast(t('donorTrack.requestWithdrawn'));
           router.back();
         }}
       >
-        Cancel request
+        {t('donorTrack.cancelRequest')}
       </Button>
     );
   }
 
   return (
     <Page
-      header={<AppBar title="Track donation" onBack={goHome} />}
+      header={<AppBar title={t('donorTrack.title')} onBack={goHome} />}
       footer={footer}
     >
       <View style={styles.headerCard}>
@@ -134,11 +136,11 @@ export default function DonorTrack() {
             {a.title}
           </Text>
           <Text size={13} color={colors.textMuted}>
-            To {a.consumer}
+            {t('donorTrack.toConsumer', { consumer: a.consumer })}
           </Text>
           {a.createdAt != null && (
             <Text size={12} color={colors.textMuted} style={{ marginTop: 1 }}>
-              Requested {formatStamp(a.createdAt)}
+              {t('donorTrack.requestedAt', { time: formatStamp(a.createdAt) })}
             </Text>
           )}
         </View>
@@ -161,14 +163,14 @@ export default function DonorTrack() {
           </View>
           <View style={{ flex: 1 }}>
             <Text size={15} weight={700} color={colors.textPrimary}>
-              Request cancelled
+              {t('donorTrack.requestCancelled')}
             </Text>
             <Text size={13} color={colors.textSecondary} style={{ marginTop: 2, lineHeight: 13 * 1.5 }}>
-              {a.cancelReason ?? 'This request was cancelled.'}
+              {a.cancelReason ?? t('donorTrack.cancelReasonDefault')}
             </Text>
             {stamp('cancelled') && (
               <Text size={12} color={colors.textMuted} style={{ marginTop: 4 }}>
-                Cancelled {stamp('cancelled')}
+                {t('donorTrack.cancelledAt', { time: stamp('cancelled') as string })}
               </Text>
             )}
           </View>
@@ -179,14 +181,14 @@ export default function DonorTrack() {
         <View style={styles.selfNote}>
           <Icon name="hand" size={18} color={colors.clothes} />
           <Text size={13} weight={600} color={palette.teal700} style={{ flex: 1, lineHeight: 13 * 1.45 }}>
-            Self handover — no volunteer. Arrange the drop-off with {a.consumer} directly.
+            {t('donorTrack.selfHandoverNote', { consumer: a.consumer })}
           </Text>
         </View>
       )}
 
       {hasVolunteer && (
         <>
-          <SectionHeader title="Your volunteer" />
+          <SectionHeader title={t('donorTrack.yourVolunteer')} />
           <VolunteerCard
             name={vol.name}
             rating={vol.rating}
@@ -204,25 +206,25 @@ export default function DonorTrack() {
           never sees / manages volunteers while the request is still waiting. */}
       {hasVolunteer && (
         <TeamSection
-          title="Delivery team"
+          title={t('donorTrack.deliveryTeam')}
           members={a.team ?? []}
           candidates={s.data.VOLUNTEERS.map((v) => ({
             id: v.id,
             name: v.name,
             contact: v.contact,
-            hint: `${v.trips} trips · ${v.distance} km`,
+            hint: t('donorTrack.candidateHint', { trips: v.trips, distance: v.distance }),
           }))}
           onAdd={(c) =>
             s.assignAllocationVolunteer({ id: c.id, name: c.name, contact: c.contact, addedBy: 'donor' })
           }
           onRemove={(id) => s.removeAllocationVolunteer(id)}
-          addLabel="Add a volunteer"
+          addLabel={t('donorTrack.addAVolunteer')}
         />
       )}
 
       {hasVolunteer && transportForDonor.length > 0 && (
         <>
-          <SectionHeader title="Transport" />
+          <SectionHeader title={t('donorTrack.transport')} />
           <View style={{ gap: 10 }}>
             {transportForDonor.map((o) => (
               <View key={o.id} style={styles.transportCard}>
@@ -239,8 +241,8 @@ export default function DonorTrack() {
                     {o.vehicleType} · {o.provider}
                   </Text>
                   <Text size={12} color={colors.textMuted}>
-                    {o.accepted ? 'Transport arranged' : 'Offered a ride'} ·{' '}
-                    {o.pricing === 'free' ? 'Free' : o.fare || 'Paid'}
+                    {o.accepted ? t('donorTrack.transportArranged') : t('donorTrack.offeredRide')} ·{' '}
+                    {o.pricing === 'free' ? t('donorTrack.free') : o.fare || t('donorTrack.paid')}
                   </Text>
                 </View>
                 <Pressable
@@ -248,7 +250,7 @@ export default function DonorTrack() {
                     router.push({ pathname: '/chat', params: { name: o.provider, phone: o.contact ?? '' } })
                   }
                   accessibilityRole="button"
-                  accessibilityLabel={`Message ${o.provider}`}
+                  accessibilityLabel={t('donorTrack.messagePerson', { name: o.provider })}
                   style={styles.transportMsgBtn}
                 >
                   <Icon name="message-circle" size={18} color={colors.textPrimary} />
@@ -256,7 +258,7 @@ export default function DonorTrack() {
                 <Pressable
                   onPress={() => callNumber(o.contact)}
                   accessibilityRole="button"
-                  accessibilityLabel={`Call ${o.provider}`}
+                  accessibilityLabel={t('donorTrack.callPerson', { name: o.provider })}
                   style={styles.transportCallBtn}
                 >
                   <Icon name="phone" size={18} color="#fff" />
@@ -267,7 +269,7 @@ export default function DonorTrack() {
         </>
       )}
 
-      <SectionHeader title="Track on map" />
+      <SectionHeader title={t('donorTrack.trackOnMap')} />
       <TrackPanel
         pickup={{ name: s.profiles.donor.name }}
         dropoff={{ name: a.consumer }}
@@ -286,20 +288,20 @@ export default function DonorTrack() {
         }
       />
 
-      <SectionHeader title="Progress" />
+      <SectionHeader title={t('donorTrack.progress')} />
       <View style={styles.timelineCard}>
         <Timeline current={timelineCurrent} steps={selfHandover ? selfSteps : volSteps} />
       </View>
 
       {!selfHandover && proofKeys.length > 0 && (
         <>
-          <SectionHeader title="Progress photos" />
+          <SectionHeader title={t('donorTrack.progressPhotos')} />
           <Text
             variant="caption"
             color={colors.textSecondary}
             style={{ marginTop: -4, marginBottom: 10 }}
           >
-            Photos your volunteer uploaded at each step.
+            {t('donorTrack.progressPhotosCaption')}
           </Text>
           <ProgressPhotos proofs={s.proofs} />
         </>

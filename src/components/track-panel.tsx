@@ -10,6 +10,7 @@ import { RouteMap, type PointKind, type TrackPoint } from '@/components/route-ma
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { geoForName } from '@/config/geo';
+import { useT } from '@/i18n/use-t';
 import { colors, palette, radius, space } from '@/theme';
 import { openDirections } from '@/utils/contact';
 
@@ -41,16 +42,22 @@ export function TrackPanel({
   /** When set, shows a "Full map" button that opens the full-screen map. */
   onExpand?: () => void;
 }) {
+  const t = useT();
+  const pickupLabel = t('trackPanel.pickup', { name: pickup.name });
+  const dropoffLabel = t('trackPanel.dropoff', { name: dropoff.name });
+  const volunteerLabel = volunteer ? t('trackPanel.volunteer', { name: volunteer.name }) : '';
+  const transportLabel = transport ? t('trackPanel.transport', { name: transport.label }) : '';
+
   const points: TrackPoint[] = [
-    { id: 'pickup', kind: 'pickup', geo: geoForName(pickup.name), label: `Pickup · ${pickup.name}` },
-    { id: 'dropoff', kind: 'dropoff', geo: geoForName(dropoff.name), label: `Drop-off · ${dropoff.name}` },
+    { id: 'pickup', kind: 'pickup', geo: geoForName(pickup.name), label: pickupLabel },
+    { id: 'dropoff', kind: 'dropoff', geo: geoForName(dropoff.name), label: dropoffLabel },
   ];
   if (volunteer) {
     points.push({
       id: 'volunteer',
       kind: 'volunteer',
       geo: geoForName(volunteer.name),
-      label: `Volunteer · ${volunteer.name}`,
+      label: volunteerLabel,
     });
   }
   if (transport) {
@@ -58,15 +65,15 @@ export function TrackPanel({
       id: 'transport',
       kind: 'transport',
       geo: geoForName(transport.label),
-      label: `Transport · ${transport.label}`,
+      label: transportLabel,
     });
   }
 
   const legend: { kind: PointKind; label: string }[] = [
-    { kind: 'pickup', label: `Pickup · ${pickup.name}` },
-    ...(volunteer ? [{ kind: 'volunteer' as PointKind, label: `Volunteer · ${volunteer.name}` }] : []),
-    ...(transport ? [{ kind: 'transport' as PointKind, label: `Transport · ${transport.label}` }] : []),
-    { kind: 'dropoff', label: `Drop-off · ${dropoff.name}` },
+    { kind: 'pickup', label: pickupLabel },
+    ...(volunteer ? [{ kind: 'volunteer' as PointKind, label: volunteerLabel }] : []),
+    ...(transport ? [{ kind: 'transport' as PointKind, label: transportLabel }] : []),
+    { kind: 'dropoff', label: dropoffLabel },
   ];
 
   return (
@@ -87,24 +94,24 @@ export function TrackPanel({
           <Pressable
             onPress={onExpand}
             accessibilityRole="button"
-            accessibilityLabel="Open full map"
+            accessibilityLabel={t('trackPanel.openFullMap')}
             style={styles.fullMap}
           >
             <Icon name="maximize-2" size={16} color={colors.brandStrong} />
             <Text variant="body" weight={700} color={colors.brandStrong}>
-              Full map
+              {t('trackPanel.fullMap')}
             </Text>
           </Pressable>
         )}
         <Pressable
           onPress={() => openDirections(geoForName(dropoff.name), geoForName(pickup.name))}
           accessibilityRole="button"
-          accessibilityLabel="Get directions in Google Maps"
+          accessibilityLabel={t('trackPanel.getDirectionsA11y')}
           style={styles.directions}
         >
           <Icon name="navigation" size={16} color="#fff" />
           <Text variant="body" weight={700} color="#fff">
-            Get directions
+            {t('trackPanel.getDirections')}
           </Text>
         </Pressable>
       </View>

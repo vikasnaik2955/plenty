@@ -9,12 +9,14 @@ import { AppBar } from '@/components/ui/app-bar';
 import { CategoryCard } from '@/components/ui/category-card';
 import { Page } from '@/components/ui/page';
 import { Text } from '@/components/ui/text';
+import { useT } from '@/i18n/use-t';
 import { useApp } from '@/store/app-store';
 import { colors } from '@/theme';
 
 export default function DonorCategory() {
   const router = useRouter();
   const s = useApp();
+  const t = useT();
 
   const pick = (category: 'food' | 'clothes') => {
     s.setDraft({ category, needsVolunteer: null });
@@ -22,9 +24,9 @@ export default function DonorCategory() {
   };
 
   return (
-    <Page header={<AppBar title="What are you donating?" onBack={() => router.back()} />}>
+    <Page header={<AppBar title={t('donorCategory.title')} onBack={() => router.back()} />}>
       <Text variant="body" color={colors.textSecondary} style={{ marginTop: 4, marginBottom: 18 }}>
-        Pick a category to get started.
+        {t('donorCategory.subtitle')}
       </Text>
       <View style={{ gap: 14 }}>
         <CategoryCard

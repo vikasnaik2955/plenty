@@ -22,43 +22,44 @@ export interface RoleNav {
   items: NavItem[];
 }
 
+// `label` holds an i18n key (e.g. 'nav.home'); the bottom nav translates it.
 export const NAVS: Record<Role, RoleNav> = {
   donor: {
     items: [
-      { key: 'home', label: 'Home', icon: 'home', route: '/(donor)/home' },
-      { key: 'history', label: 'History', icon: 'clock', route: '/(donor)/history' },
-      { key: 'donate', label: 'Donate', icon: 'plus', fab: true, push: '/(donor)/category' },
-      { key: 'rewards', label: 'Rewards', icon: 'award', badge: 2, route: '/(donor)/rewards' },
-      { key: 'profile', label: 'Profile', icon: 'user', route: '/(donor)/profile' },
+      { key: 'home', label: 'nav.home', icon: 'home', route: '/(donor)/home' },
+      { key: 'history', label: 'nav.history', icon: 'clock', route: '/(donor)/history' },
+      { key: 'donate', label: 'nav.donate', icon: 'plus', fab: true, push: '/(donor)/category' },
+      { key: 'rewards', label: 'nav.rewards', icon: 'award', badge: 2, route: '/(donor)/rewards' },
+      { key: 'profile', label: 'nav.profile', icon: 'user', route: '/(donor)/profile' },
     ],
   },
   volunteer: {
     items: [
-      { key: 'home', label: 'Requests', icon: 'inbox', route: '/(volunteer)/requests' },
-      { key: 'team', label: 'Team', icon: 'users', route: '/(volunteer)/team' },
-      { key: 'rewards', label: 'Rewards', icon: 'award', route: '/(volunteer)/rewards' },
-      { key: 'profile', label: 'Profile', icon: 'user', route: '/(volunteer)/profile' },
+      { key: 'home', label: 'nav.requests', icon: 'inbox', route: '/(volunteer)/requests' },
+      { key: 'team', label: 'nav.team', icon: 'users', route: '/(volunteer)/team' },
+      { key: 'rewards', label: 'nav.rewards', icon: 'award', route: '/(volunteer)/rewards' },
+      { key: 'profile', label: 'nav.profile', icon: 'user', route: '/(volunteer)/profile' },
     ],
   },
   consumer: {
     items: [
-      { key: 'home', label: 'Home', icon: 'home', route: '/(consumer)/home' },
-      { key: 'reports', label: 'Reports', icon: 'chart-column', route: '/(consumer)/reports' },
-      { key: 'profile', label: 'Profile', icon: 'user', route: '/(consumer)/profile' },
+      { key: 'home', label: 'nav.home', icon: 'home', route: '/(consumer)/home' },
+      { key: 'reports', label: 'nav.reports', icon: 'chart-column', route: '/(consumer)/reports' },
+      { key: 'profile', label: 'nav.profile', icon: 'user', route: '/(consumer)/profile' },
     ],
   },
   admin: {
     items: [
-      { key: 'transport', label: 'Transport', icon: 'truck', route: '/(admin)/transport' },
-      { key: 'alloc', label: 'Allocations', icon: 'list-checks', route: '/(admin)/allocations' },
-      { key: 'audit', label: 'Audit', icon: 'scroll-text', route: '/(admin)/audit' },
+      { key: 'transport', label: 'nav.transport', icon: 'truck', route: '/(admin)/transport' },
+      { key: 'alloc', label: 'nav.allocations', icon: 'list-checks', route: '/(admin)/allocations' },
+      { key: 'audit', label: 'nav.audit', icon: 'scroll-text', route: '/(admin)/audit' },
     ],
   },
   transport: {
     items: [
-      { key: 'home', label: 'Jobs', icon: 'package', route: '/(transport)/home' },
-      { key: 'vehicle', label: 'Vehicle', icon: 'truck', route: '/(transport)/vehicle' },
-      { key: 'profile', label: 'Profile', icon: 'user', route: '/(transport)/profile' },
+      { key: 'home', label: 'nav.jobs', icon: 'package', route: '/(transport)/home' },
+      { key: 'vehicle', label: 'nav.vehicle', icon: 'truck', route: '/(transport)/vehicle' },
+      { key: 'profile', label: 'nav.profile', icon: 'user', route: '/(transport)/profile' },
     ],
   },
 };

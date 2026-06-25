@@ -9,6 +9,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
+import { useT } from '@/i18n/use-t';
 import { STATUS_LABEL, colors, radius } from '@/theme';
 import { formatStamp } from '@/utils/datetime';
 import type { ProofPhotos } from '@/data/types';
@@ -17,6 +18,7 @@ import type { ProofPhotos } from '@/data/types';
 const ORDER = ['accepted', 'picked_up', 'delivered', 'completed'];
 
 export function ProgressPhotos({ proofs }: { proofs?: ProofPhotos }) {
+  const t = useT();
   const keys = proofs
     ? ORDER.filter((k) => proofs[k]).concat(Object.keys(proofs).filter((k) => !ORDER.includes(k)))
     : [];
@@ -25,7 +27,7 @@ export function ProgressPhotos({ proofs }: { proofs?: ProofPhotos }) {
     return (
       <View style={styles.empty}>
         <Text variant="sm" color={colors.textMuted} align="center">
-          No progress photos yet. The volunteer adds a photo at each step.
+          {t('progressPhotos.empty')}
         </Text>
       </View>
     );
@@ -44,7 +46,7 @@ export function ProgressPhotos({ proofs }: { proofs?: ProofPhotos }) {
               </View>
             </View>
             <Text size={11} weight={700} color={colors.textSecondary} align="center" style={{ marginTop: 5 }}>
-              {STATUS_LABEL[k] ?? k.replace('_', ' ')}
+              {STATUS_LABEL[k] ? t(`status.${k}`) : k.replace('_', ' ')}
             </Text>
             <Text size={10} color={colors.textMuted} align="center">
               {formatStamp(p.at)}

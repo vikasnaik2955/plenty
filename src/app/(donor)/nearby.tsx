@@ -18,6 +18,7 @@ import { MapPlaceholder, type MapPin } from '@/components/ui/map-placeholder';
 import { Page } from '@/components/ui/page';
 import { Tabs } from '@/components/ui/tabs';
 import { Text } from '@/components/ui/text';
+import { useT } from '@/i18n/use-t';
 import { useApp } from '@/store/app-store';
 import { colors, radius } from '@/theme';
 import type { Consumer } from '@/data/types';
@@ -28,6 +29,7 @@ const PIN_Y = [34, 40, 64, 70];
 export default function DonorNearby() {
   const router = useRouter();
   const s = useApp();
+  const t = useT();
   const [view, setView] = useState('map');
   const [picked, setPicked] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -70,14 +72,14 @@ export default function DonorNearby() {
     <Page
       header={
         <AppBar
-          title="Recipients within 10 km"
-          subtitle={`${list.length} nearby · least-served first`}
+          title={t('donorNearby.title')}
+          subtitle={t('donorNearby.subtitle', { count: list.length })}
           onBack={() => router.back()}
         />
       }
       footer={
         <Button fullWidth size="lg" disabled={!picked} onPress={() => setSheetOpen(true)}>
-          {picked ? 'Send request' : 'Select a recipient'}
+          {picked ? t('donorNearby.sendRequest') : t('donorNearby.selectRecipient')}
         </Button>
       }
     >
@@ -85,8 +87,8 @@ export default function DonorNearby() {
         active={view}
         onChange={setView}
         items={[
-          { key: 'map', label: 'Map' },
-          { key: 'list', label: 'List' },
+          { key: 'map', label: t('donorNearby.tabMap') },
+          { key: 'list', label: t('donorNearby.tabList') },
         ]}
         style={{ marginBottom: 14 }}
       />
@@ -109,7 +111,7 @@ export default function DonorNearby() {
       >
         <Icon name="info" size={16} color={colors.brandStrong} />
         <Text variant="caption" color={colors.textSecondary} style={{ flex: 1, lineHeight: 17 }}>
-          Places with fewer donations this month are shown first — picking them helps spread support.
+          {t('donorNearby.leastServedHint')}
         </Text>
       </View>
 
@@ -133,7 +135,7 @@ export default function DonorNearby() {
         <Pressable
           onPress={() => router.push('/(donor)/add-shelter')}
           accessibilityRole="button"
-          accessibilityLabel="Add a shelter or community"
+          accessibilityLabel={t('donorNearby.addShelter')}
           style={{
             flexDirection: 'row',
             alignItems: 'center',
@@ -160,10 +162,10 @@ export default function DonorNearby() {
           </View>
           <View style={{ flex: 1 }}>
             <Text variant="body" weight={700} color={colors.textPrimary}>
-              Add a shelter or community
+              {t('donorNearby.addShelter')}
             </Text>
             <Text variant="caption" color={colors.textMuted}>
-              Not listed? Register a new recipient with photos
+              {t('donorNearby.addShelterHint')}
             </Text>
           </View>
         </Pressable>
@@ -171,11 +173,11 @@ export default function DonorNearby() {
 
       <BottomSheet
         open={sheetOpen}
-        title="Send this request?"
+        title={t('donorNearby.confirmTitle')}
         onClose={() => setSheetOpen(false)}
         footer={
           <Button fullWidth size="lg" onPress={confirm}>
-            {selfHandover ? 'Confirm donation' : 'Confirm & notify volunteers'}
+            {selfHandover ? t('donorNearby.confirmDonation') : t('donorNearby.confirmNotify')}
           </Button>
         }
       >
@@ -188,35 +190,33 @@ export default function DonorNearby() {
             >
               {selfHandover ? (
                 <>
-                  We&apos;ll let{' '}
+                  {t('donorNearby.selfHandoverBody1')}{' '}
                   <Text variant="body" weight={700} color={colors.textPrimary}>
                     {chosen.name}
                   </Text>{' '}
-                  know your {s.draft.category} donation is ready. You&apos;ll arrange the handover
-                  directly — no volunteer involved.
+                  {t('donorNearby.selfHandoverBody2', { category: s.draft.category })}
                 </>
               ) : (
                 <>
-                  We&apos;ll broadcast your {s.draft.category} donation to volunteers within 10 km.
-                  The first to accept will handle pickup and delivery to{' '}
+                  {t('donorNearby.broadcastBody1', { category: s.draft.category })}{' '}
                   <Text variant="body" weight={700} color={colors.textPrimary}>
                     {chosen.name}
                   </Text>
-                  .
+                  {t('donorNearby.broadcastBody2')}
                 </>
               )}
             </Text>
             <DetailRow
               icon={selfHandover ? 'hand' : 'bike'}
-              label="Delivery"
-              value={selfHandover ? 'Self handover' : 'Volunteer pickup & delivery'}
+              label={t('donorNearby.deliveryLabel')}
+              value={selfHandover ? t('donorNearby.selfHandover') : t('donorNearby.volunteerPickup')}
             />
             <DetailRow
               icon="users"
-              label="Recipient need"
-              value={`${chosen.people} people · ${chosen.type}`}
+              label={t('donorNearby.recipientNeed')}
+              value={t('donorNearby.peopleType', { count: chosen.people, type: chosen.type })}
             />
-            <DetailRow icon="navigation" label="Distance" value={`${chosen.distance} km away`} />
+            <DetailRow icon="navigation" label={t('donorNearby.distance')} value={t('donorNearby.kmAway', { distance: chosen.distance })} />
           </View>
         )}
       </BottomSheet>
@@ -234,7 +234,7 @@ export default function DonorNearby() {
                 setDetail(null);
               }}
             >
-              Select recipient
+              {t('donorNearby.selectRecipientBtn')}
             </Button>
           )
         }

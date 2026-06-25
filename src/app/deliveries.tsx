@@ -12,10 +12,12 @@ import { DonationCard, type DonationMeta } from '@/components/ui/donation-card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Page } from '@/components/ui/page';
 import { Tabs } from '@/components/ui/tabs';
+import { useT } from '@/i18n/use-t';
 import { useApp } from '@/store/app-store';
 
 export default function DeliveriesScreen() {
   const router = useRouter();
+  const t = useT();
   const s = useApp();
   const [filter, setFilter] = useState('all');
 
@@ -24,28 +26,28 @@ export default function DeliveriesScreen() {
   if (filter === 'clothes') list = list.filter((d) => d.category === 'clothes');
 
   return (
-    <Page header={<AppBar title="Delivery history" onBack={() => router.back()} />}>
+    <Page header={<AppBar title={t('deliveries.title')} onBack={() => router.back()} />}>
       <Tabs
         variant="underline"
         active={filter}
         onChange={setFilter}
         items={[
-          { key: 'all', label: 'All' },
-          { key: 'food', label: 'Food' },
-          { key: 'clothes', label: 'Clothes' },
+          { key: 'all', label: t('deliveries.filterAll') },
+          { key: 'food', label: t('deliveries.filterFood') },
+          { key: 'clothes', label: t('deliveries.filterClothes') },
         ]}
         style={{ marginBottom: 14 }}
       />
       {list.length === 0 ? (
-        <EmptyState compact icon="inbox" title="No deliveries yet" message="Completed deliveries will show up here." />
+        <EmptyState compact icon="inbox" title={t('deliveries.emptyTitle')} message={t('deliveries.emptyMessage')} />
       ) : (
         <View style={{ gap: 10 }}>
           {list.map((d) => {
             const meta: DonationMeta[] = [
-              { icon: 'users', label: d.serves ? `Serves ${d.serves}` : (d.pieces ?? '') },
+              { icon: 'users', label: d.serves ? t('deliveries.serves', { count: d.serves }) : (d.pieces ?? '') },
             ];
             if (d.proofs && Object.keys(d.proofs).length > 0) {
-              meta.push({ icon: 'image', label: `${Object.keys(d.proofs).length} photos` });
+              meta.push({ icon: 'image', label: t('deliveries.photos', { count: Object.keys(d.proofs).length }) });
             }
             return (
               <DonationCard

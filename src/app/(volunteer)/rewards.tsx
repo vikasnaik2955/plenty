@@ -29,24 +29,33 @@ import {
   type Badge,
   type Perk,
 } from '@/config/rewards';
+import { useT } from '@/i18n/use-t';
 import { colors, palette, radius, shadows, space } from '@/theme';
 import { formatRelative } from '@/utils/datetime';
 
 const grp = (n: number) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
 export default function VolRewards() {
+  const t = useT();
   const s = useApp();
   const r = s.volRewards;
 
   const tier = tierForPoints(r.lifetimePoints);
+  const tierName = t(`rewards.tier.${tier.id}`);
   const next = nextTier(r.lifetimePoints);
+  const nextName = next ? t(`rewards.tier.${next.id}`) : '';
   const progress = tierProgress(r.lifetimePoints);
   const toNext = next ? next.minPoints - r.lifetimePoints : 0;
   const nb = nextBadge(r);
   const earned = new Set(r.badges);
 
   const qualifying = r.deliveriesThisWeek >= 2;
-  const milestoneLeft = r.weeklyStreak < 4 ? `${4 - r.weeklyStreak} wk to +150` : r.weeklyStreak < 12 ? `${12 - r.weeklyStreak} wk to +400` : 'Max streak';
+  const milestoneLeft =
+    r.weeklyStreak < 4
+      ? t('volRewards.milestoneToFirst', { weeks: 4 - r.weeklyStreak })
+      : r.weeklyStreak < 12
+        ? t('volRewards.milestoneToSecond', { weeks: 12 - r.weeklyStreak })
+        : t('volRewards.maxStreak');
 
   const [badge, setBadge] = useState<Badge | null>(null);
 
@@ -58,8 +67,8 @@ export default function VolRewards() {
         <Hero
           accent={palette.gold400}
           accent2={palette.gold600}
-          eyebrow="Plenty Rewards"
-          title={`${tier.name} volunteer`}
+          eyebrow={t('volRewards.eyebrow')}
+          title={t('volRewards.heroTitle', { tier: tierName })}
           right={
             <View style={styles.heroBadge}>
               <Icon name={tier.icon} size={24} color="#fff" />
@@ -71,14 +80,16 @@ export default function VolRewards() {
               {grp(r.balance)}
             </Text>
             <Text size={13} weight={600} color="#fff" style={{ opacity: 0.9, marginTop: 4 }}>
-              points to spend ·{' '}
-              {next ? `${grp(toNext)} to ${next.name}` : 'Top tier reached 👑'}
+              {t('volRewards.pointsToSpend')} ·{' '}
+              {next
+                ? t('volRewards.toNextTier', { points: grp(toNext), tier: nextName })
+                : t('volRewards.topTierReached')}
             </Text>
             <View style={styles.barTrack}>
               <View style={[styles.barFill, { width: `${Math.round(progress * 100)}%` }]} />
             </View>
             <Text size={11} weight={600} color="#fff" style={{ opacity: 0.85, marginTop: 6 }}>
-              {grp(r.lifetimePoints)} lifetime points earned
+              {t('volRewards.lifetimePoints', { points: grp(r.lifetimePoints) })}
             </Text>
           </View>
         </Hero>
@@ -92,10 +103,11 @@ export default function VolRewards() {
           </View>
           <View style={{ flex: 1, minWidth: 0 }}>
             <Text size={16} weight={800} color={colors.textPrimary}>
-              {r.weeklyStreak}-week streak
+              {t('volRewards.weekStreak', { count: r.weeklyStreak })}
             </Text>
             <Text size={12} weight={600} color={colors.textMuted}>
-              {qualifying ? '×1.5 points active this week' : `1 more run this week unlocks ×1.5`} · {milestoneLeft}
+              {qualifying ? t('volRewards.multiplierActive') : t('volRewards.unlockMultiplier')} ·{' '}
+              {milestoneLeft}
             </Text>
           </View>
           <View style={styles.weekRing}>
@@ -103,7 +115,7 @@ export default function VolRewards() {
               {Math.min(r.deliveriesThisWeek, 2)}/2
             </Text>
             <Text size={10} weight={600} color={colors.textMuted}>
-              this wk
+              {t('volRewards.thisWk')}
             </Text>
           </View>
         </View>
@@ -111,7 +123,7 @@ export default function VolRewards() {
           <View style={styles.graceRow}>
             <Icon name="shield-check" size={13} color={colors.brandStrong} />
             <Text size={11} weight={600} color={colors.textSecondary}>
-              Grace week ready — one missed week this quarter won&apos;t break your streak.
+              {t('volRewards.graceWeek')}
             </Text>
           </View>
         )}
@@ -121,13 +133,13 @@ export default function VolRewards() {
       <View style={styles.statRow}>
         <StatCard
           value={grp(r.deliveriesCompleted)}
-          label="Deliveries"
+          label={t('volRewards.statDeliveries')}
           accent="brand"
           icon={<Icon name="truck" size={20} color={colors.brandStrong} />}
         />
         <StatCard
           value={grp(r.peopleFed)}
-          label="People fed"
+          label={t('volRewards.statPeopleFed')}
           accent="reward"
           icon={<Icon name="heart" size={20} color={palette.gold600} />}
         />
@@ -142,10 +154,10 @@ export default function VolRewards() {
             </View>
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text size={14} weight={700} color={colors.textPrimary}>
-                Next badge · {nb.badge.name}
+                {t('volRewards.nextBadge', { name: t(`rewards.badge.${nb.badge.id}.name`) })}
               </Text>
               <Text size={12} color={colors.textMuted} style={{ marginBottom: 6 }}>
-                {grp(nb.current)} / {nb.badge.goal}
+                {grp(nb.current)} / {t(`rewards.badge.${nb.badge.id}.goal`)}
               </Text>
               <View style={styles.nudgeTrack}>
                 <View style={[styles.nudgeFill, { width: `${Math.round(nb.ratio * 100)}%` }]} />
@@ -157,16 +169,23 @@ export default function VolRewards() {
 
       {/* Badges grid */}
       <View style={{ paddingHorizontal: space[5] }}>
-        <SectionHeader title={`Badges · ${r.badges.length}/${BADGES.length}`} />
+        <SectionHeader
+          title={t('volRewards.badgesCount', { earned: r.badges.length, total: BADGES.length })}
+        />
         <View style={styles.badgeGrid}>
           {BADGES.map((b) => {
             const on = earned.has(b.id);
+            const bName = t(`rewards.badge.${b.id}.name`);
             return (
               <Pressable
                 key={b.id}
                 onPress={() => setBadge(b)}
                 accessibilityRole="button"
-                accessibilityLabel={`${b.name}${on ? ', earned' : ', locked'}`}
+                accessibilityLabel={
+                  on
+                    ? t('volRewards.badgeEarnedLabel', { name: bName })
+                    : t('volRewards.badgeLockedLabel', { name: bName })
+                }
                 style={styles.badgeCell}
               >
                 <View style={[styles.badgeIcon, on ? styles.badgeIconOn : styles.badgeIconOff]}>
@@ -179,10 +198,10 @@ export default function VolRewards() {
                   align="center"
                   numberOfLines={1}
                 >
-                  {b.name}
+                  {bName}
                 </Text>
                 <Text size={10} color={colors.textMuted} align="center" numberOfLines={1}>
-                  {on ? 'Earned' : b.goal}
+                  {on ? t('volRewards.earned') : t(`rewards.badge.${b.id}.goal`)}
                 </Text>
               </Pressable>
             );
@@ -192,9 +211,9 @@ export default function VolRewards() {
 
       {/* Perks store */}
       <View style={{ paddingHorizontal: space[5] }}>
-        <SectionHeader title="Rewards store" />
+        <SectionHeader title={t('volRewards.storeTitle')} />
         <Text variant="caption" color={colors.textSecondary} style={{ marginTop: -4, marginBottom: 10 }}>
-          Spend points on real perks. Redeeming uses your balance — your tier never drops.
+          {t('volRewards.storeSubtitle')}
         </Text>
         <View style={{ gap: 10 }}>
           {PERKS.map((p) => (
@@ -205,7 +224,7 @@ export default function VolRewards() {
 
       {/* Ledger */}
       <View style={{ paddingHorizontal: space[5] }}>
-        <SectionHeader title="Points history" />
+        <SectionHeader title={t('volRewards.pointsHistory')} />
         <View style={styles.ledger}>
           {r.ledger.slice(0, 12).map((l, i) => {
             const redeem = l.kind === 'redeem';
@@ -240,16 +259,16 @@ export default function VolRewards() {
 
       {/* How points work */}
       <View style={{ paddingHorizontal: space[5], paddingBottom: space[4] }}>
-        <SectionHeader title="How to earn points" />
+        <SectionHeader title={t('volRewards.howToEarn')} />
         <View style={styles.rulesCard}>
           {POINT_RULES.map((rule, i) => (
-            <View key={rule.action} style={[styles.ruleRow, i < POINT_RULES.length - 1 && styles.ledgerDivider]}>
+            <View key={rule.id} style={[styles.ruleRow, i < POINT_RULES.length - 1 && styles.ledgerDivider]}>
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text size={13} weight={700} color={colors.textPrimary}>
-                  {rule.action}
+                  {t(`rewards.rule.${rule.id}.action`)}
                 </Text>
                 <Text size={11} color={colors.textMuted}>
-                  {rule.note}
+                  {t(`rewards.rule.${rule.id}.note`)}
                 </Text>
               </View>
               <Text size={13} weight={800} color={palette.gold600}>
@@ -261,7 +280,11 @@ export default function VolRewards() {
       </View>
 
       {/* Badge detail sheet */}
-      <BottomSheet open={!!badge} title={badge?.name ?? ''} onClose={() => setBadge(null)}>
+      <BottomSheet
+        open={!!badge}
+        title={badge ? t(`rewards.badge.${badge.id}.name`) : ''}
+        onClose={() => setBadge(null)}
+      >
         {badge && (
           <View style={{ alignItems: 'center', gap: 12, paddingBottom: space[2] }}>
             <View
@@ -278,7 +301,7 @@ export default function VolRewards() {
               />
             </View>
             <Text size={15} weight={600} color={colors.textSecondary} align="center">
-              {badge.flavor}
+              {t(`rewards.badge.${badge.id}.flavor`)}
             </Text>
             <View style={styles.badgeGoalPill}>
               <Icon
@@ -291,7 +314,9 @@ export default function VolRewards() {
                 weight={700}
                 color={earned.has(badge.id) ? colors.brandStrong : colors.textSecondary}
               >
-                {earned.has(badge.id) ? 'Earned' : `Goal · ${badge.goal}`}
+                {earned.has(badge.id)
+                  ? t('volRewards.earned')
+                  : t('volRewards.goalPill', { goal: t(`rewards.badge.${badge.id}.goal`) })}
               </Text>
             </View>
           </View>
@@ -302,12 +327,15 @@ export default function VolRewards() {
 }
 
 function PerkRow({ perk, onRedeem }: { perk: Perk; onRedeem: () => void }) {
+  const t = useT();
   const s = useApp();
   const block = redeemBlock(perk, s.volRewards, s.volRewards.lifetimePoints);
   const redeemed = block === 'redeemed';
   const locked = block === 'tier';
   const poor = block === 'points';
   const ok = block == null;
+
+  const perkName = t(`rewards.perk.${perk.id}.name`);
 
   return (
     <View style={styles.perkCard}>
@@ -316,27 +344,33 @@ function PerkRow({ perk, onRedeem }: { perk: Perk; onRedeem: () => void }) {
       </View>
       <View style={{ flex: 1, minWidth: 0 }}>
         <Text size={14} weight={700} color={colors.textPrimary}>
-          {perk.name}
+          {perkName}
         </Text>
         <Text size={12} color={colors.textMuted} numberOfLines={2}>
-          {perk.description}
+          {t(`rewards.perk.${perk.id}.desc`)}
         </Text>
         <Text size={12} weight={800} color={palette.gold600} style={{ marginTop: 3 }}>
-          {grp(perk.costPoints)} pts
+          {t('volRewards.perkPts', { points: grp(perk.costPoints) })}
         </Text>
       </View>
       <Pressable
         onPress={ok ? onRedeem : undefined}
         disabled={!ok}
         accessibilityRole="button"
-        accessibilityLabel={`Redeem ${perk.name}`}
+        accessibilityLabel={t('volRewards.redeemName', { name: perkName })}
         style={[
           styles.redeemBtn,
           ok ? { backgroundColor: colors.brand } : { backgroundColor: colors.surfaceSunken },
         ]}
       >
         <Text size={13} weight={700} color={ok ? '#fff' : colors.textMuted}>
-          {redeemed ? 'Redeemed' : locked ? `🔒 ${VOL_TIERS[perk.minTierIndex].name}` : poor ? 'Need more' : 'Redeem'}
+          {redeemed
+            ? t('volRewards.redeemed')
+            : locked
+              ? t('volRewards.lockedTier', { tier: t(`rewards.tier.${VOL_TIERS[perk.minTierIndex].id}`) })
+              : poor
+                ? t('volRewards.needMore')
+                : t('volRewards.redeem')}
         </Text>
       </Pressable>
     </View>

@@ -11,12 +11,14 @@ import { Avatar } from '@/components/ui/avatar';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Page } from '@/components/ui/page';
 import { Text } from '@/components/ui/text';
+import { useT } from '@/i18n/use-t';
 import { useApp } from '@/store/app-store';
 import { colors, radius, shadows, space } from '@/theme';
 import { conversationsFor } from '@/utils/chat';
 import { formatRelative } from '@/utils/datetime';
 
 export default function MessagesScreen() {
+  const t = useT();
   const router = useRouter();
   const s = useApp();
   const me = s.role ? s.profiles[s.role].name : '';
@@ -36,12 +38,12 @@ export default function MessagesScreen() {
   };
 
   return (
-    <Page header={<AppBar title="Messages" onBack={() => router.back()} />}>
+    <Page header={<AppBar title={t('messages.title')} onBack={() => router.back()} />}>
       {conversations.length === 0 ? (
         <EmptyState
           icon="message-circle"
-          title="No messages yet"
-          message="Message a volunteer, donor, or team member and your conversations will show up here."
+          title={t('messages.emptyTitle')}
+          message={t('messages.emptyMessage')}
         />
       ) : (
         <View style={{ gap: 10 }}>
@@ -75,7 +77,9 @@ export default function MessagesScreen() {
                     style={{ flex: 1 }}
                   >
                     {c.lastMessage
-                      ? `${c.lastMessage.from === me ? 'You: ' : ''}${c.lastMessage.text}`
+                      ? c.lastMessage.from === me
+                        ? t('messages.youPrefix', { text: c.lastMessage.text })
+                        : c.lastMessage.text
                       : ''}
                   </Text>
                   {c.unread > 0 && (

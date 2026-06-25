@@ -12,6 +12,7 @@ import { StyleSheet, View } from 'react-native';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
+import { useT } from '@/i18n/use-t';
 import { colors, space } from '@/theme';
 
 interface Props {
@@ -19,6 +20,29 @@ interface Props {
 }
 interface State {
   error: Error | null;
+}
+
+/**
+ * Functional fallback so it can use the `useT` hook (a class component can't).
+ */
+function ErrorFallback({ onReset }: { onReset: () => void }) {
+  const t = useT();
+  return (
+    <View style={styles.container}>
+      <View style={styles.iconWrap}>
+        <Icon name="triangle-alert" size={34} color={colors.warning} />
+      </View>
+      <Text variant="h3" align="center">
+        {t('errorBoundary.title')}
+      </Text>
+      <Text variant="body" color={colors.textSecondary} align="center" style={styles.message}>
+        {t('errorBoundary.message')}
+      </Text>
+      <Button onPress={onReset} leftIcon="rotate-ccw" style={styles.button}>
+        {t('common.retry')}
+      </Button>
+    </View>
+  );
 }
 
 export class ErrorBoundary extends Component<Props, State> {
@@ -36,22 +60,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.error) {
-      return (
-        <View style={styles.container}>
-          <View style={styles.iconWrap}>
-            <Icon name="triangle-alert" size={34} color={colors.warning} />
-          </View>
-          <Text variant="h3" align="center">
-            Something went wrong
-          </Text>
-          <Text variant="body" color={colors.textSecondary} align="center" style={styles.message}>
-            That screen hit a snag. You can try again — your progress is safe.
-          </Text>
-          <Button onPress={this.reset} leftIcon="rotate-ccw" style={styles.button}>
-            Try again
-          </Button>
-        </View>
-      );
+      return <ErrorFallback onReset={this.reset} />;
     }
     return this.props.children;
   }

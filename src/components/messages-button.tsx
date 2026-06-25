@@ -7,11 +7,13 @@ import { Pressable, View } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
+import { useT } from '@/i18n/use-t';
 import { useApp } from '@/store/app-store';
 import { colors, radius } from '@/theme';
 import { totalUnread } from '@/utils/chat';
 
 export function MessagesButton({ tone = 'light' }: { tone?: 'light' | 'dark' }) {
+  const t = useT();
   const router = useRouter();
   const s = useApp();
   const me = s.role ? s.profiles[s.role].name : '';
@@ -23,7 +25,9 @@ export function MessagesButton({ tone = 'light' }: { tone?: 'light' | 'dark' }) 
     <Pressable
       onPress={() => router.push('/messages')}
       accessibilityRole="button"
-      accessibilityLabel={unread > 0 ? `Messages, ${unread} unread` : 'Messages'}
+      accessibilityLabel={
+        unread > 0 ? t('messagesButton.unread', { count: unread }) : t('messages.title')
+      }
       style={{
         width: 44,
         height: 44,

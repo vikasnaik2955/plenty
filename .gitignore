@@ -37,6 +37,10 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
+# i18n pipeline intermediates (locale .ts files are the source of truth)
+scripts/loc/
+scripts/en.json
+
 app-example
 
 # generated native folders

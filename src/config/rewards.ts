@@ -31,24 +31,31 @@ export const POINTS = {
   streakMultiplier: 1.5,
 } as const;
 
-/** Human-readable summary of how points are earned (shown on the rewards screen). */
-export const POINT_RULES: { action: string; points: string; note: string }[] = [
-  { action: 'Complete a delivery', points: '+40', note: 'Core payout when the drop-off is confirmed.' },
-  { action: 'Accept a request', points: '+10', note: 'Posted on completion — accepting and dropping earns nothing.' },
-  { action: 'On-time pickup', points: '+15', note: 'Pickup photo logged within the window.' },
-  { action: 'Pickup + delivery photos', points: '+10 each', note: 'Proof the donor and shelter can see.' },
-  { action: 'Distance travelled', points: '+5 / km (max +50)', note: 'Rewards longer hauls without paying wages.' },
-  { action: 'Food run', points: '+10', note: 'Perishable food is time-critical.' },
-  { action: 'Bring a teammate', points: '+15', note: 'Grow the corps and split the load.' },
-  { action: 'Register a shelter', points: '+80', note: 'Put a new community on the map.' },
-  { action: 'Weekly streak', points: '×1.5', note: 'Every run in a qualifying week earns 50% more.' },
-  { action: 'Streak milestones', points: '+150 / +400', note: 'One-time at 4 and 12 weeks.' },
+/**
+ * Human-readable summary of how points are earned (shown on the rewards screen).
+ * `action`/`note` are English fallbacks; screens translate via the stable `id`
+ * (`rewards.rule.{id}.action` / `rewards.rule.{id}.note`). `points` is numeric
+ * copy and is intentionally not translated.
+ */
+export const POINT_RULES: { id: string; action: string; points: string; note: string }[] = [
+  { id: 'complete', action: 'Complete a delivery', points: '+40', note: 'Core payout when the drop-off is confirmed.' },
+  { id: 'accept', action: 'Accept a request', points: '+10', note: 'Posted on completion — accepting and dropping earns nothing.' },
+  { id: 'onTime', action: 'On-time pickup', points: '+15', note: 'Pickup photo logged within the window.' },
+  { id: 'photos', action: 'Pickup + delivery photos', points: '+10 each', note: 'Proof the donor and shelter can see.' },
+  { id: 'distance', action: 'Distance travelled', points: '+5 / km (max +50)', note: 'Rewards longer hauls without paying wages.' },
+  { id: 'food', action: 'Food run', points: '+10', note: 'Perishable food is time-critical.' },
+  { id: 'teammate', action: 'Bring a teammate', points: '+15', note: 'Grow the corps and split the load.' },
+  { id: 'shelter', action: 'Register a shelter', points: '+80', note: 'Put a new community on the map.' },
+  { id: 'streak', action: 'Weekly streak', points: '×1.5', note: 'Every run in a qualifying week earns 50% more.' },
+  { id: 'milestones', action: 'Streak milestones', points: '+150 / +400', note: 'One-time at 4 and 12 weeks.' },
 ];
 
 // ---------------------------------------------------------------------------
 // Tiers
 // ---------------------------------------------------------------------------
 export interface VolTier {
+  /** Stable slug for translation lookup: `rewards.tier.{id}`. */
+  id: string;
   name: string;
   minPoints: number;
   icon: string;
@@ -57,12 +64,12 @@ export interface VolTier {
 }
 
 export const VOL_TIERS: VolTier[] = [
-  { name: 'Sprout', minPoints: 0, icon: 'sprout', accent: palette.green400, perks: ['Verified volunteer status', 'Access to nearby requests', 'Welcome certificate on first delivery'] },
-  { name: 'Helper', minPoints: 300, icon: 'star', accent: palette.teal500, perks: ['Helper badge', 'Sticker + enamel pin', 'Unlocks the ₹50 fuel voucher'] },
-  { name: 'Pathfinder', minPoints: 900, icon: 'map-pin', accent: palette.blue500, perks: ['10-min priority head-start', '₹100 fuel/transport voucher', 'Signed appreciation certificate'] },
-  { name: 'Guardian', minPoints: 2000, icon: 'shield-check', accent: palette.violet500, perks: ['“Trusted Volunteer” tag for donors', 'Free Plenty t-shirt', 'Lead teams of up to 3'] },
-  { name: 'Beacon', minPoints: 4000, icon: 'trophy', accent: palette.gold500, perks: ['Permanent featured status', 'Quarterly meetup invite', 'Named on the Bandra community wall'] },
-  { name: 'Legend', minPoints: 8000, icon: 'crown', accent: palette.orange500, perks: ['Lifetime Legend crown + Hall of Heroes', 'Story in the Plenty newsletter', 'Annual ₹2,000 charity match in your name'] },
+  { id: 'sprout', name: 'Sprout', minPoints: 0, icon: 'sprout', accent: palette.green400, perks: ['Verified volunteer status', 'Access to nearby requests', 'Welcome certificate on first delivery'] },
+  { id: 'helper', name: 'Helper', minPoints: 300, icon: 'star', accent: palette.teal500, perks: ['Helper badge', 'Sticker + enamel pin', 'Unlocks the ₹50 fuel voucher'] },
+  { id: 'pathfinder', name: 'Pathfinder', minPoints: 900, icon: 'map-pin', accent: palette.blue500, perks: ['10-min priority head-start', '₹100 fuel/transport voucher', 'Signed appreciation certificate'] },
+  { id: 'guardian', name: 'Guardian', minPoints: 2000, icon: 'shield-check', accent: palette.violet500, perks: ['“Trusted Volunteer” tag for donors', 'Free Plenty t-shirt', 'Lead teams of up to 3'] },
+  { id: 'beacon', name: 'Beacon', minPoints: 4000, icon: 'trophy', accent: palette.gold500, perks: ['Permanent featured status', 'Quarterly meetup invite', 'Named on the Bandra community wall'] },
+  { id: 'legend', name: 'Legend', minPoints: 8000, icon: 'crown', accent: palette.orange500, perks: ['Lifetime Legend crown + Hall of Heroes', 'Story in the Plenty newsletter', 'Annual ₹2,000 charity match in your name'] },
 ];
 
 export function tierIndexForPoints(points: number): number {
@@ -361,7 +368,19 @@ export function computeDeliveryReward(
   };
 }
 
-/** Apply a perk redemption (pure). Returns ok=false with a reason when blocked. */
+/**
+ * Apply a perk redemption (pure). Returns ok=false with a reason when blocked.
+ *
+ * i18n note: `reason` is an i18n KEY (not English) so the caller can translate it
+ * at fire-time with the current language. The possible keys are:
+ *   - 'rewards.redeem.alreadyRedeemed' — already redeemed (once-per-user perk)
+ *   - 'rewards.redeem.reachTier'       — tier too low; interpolate {tier} with the
+ *                                        TRANSLATED name of `VOL_TIERS[perk.minTierIndex]`
+ *                                        (look up `rewards.tier.{tierId}`)
+ *   - 'rewards.redeem.notEnough'       — not enough spendable points
+ * The matching English strings live in the i18n dictionary, so the store passes
+ * `reason` straight to its translate fn (with the {tier} param for reachTier).
+ */
 export function applyRedeem(
   prev: VolRewards,
   perk: Perk,
@@ -369,9 +388,9 @@ export function applyRedeem(
   now: number,
 ): { ok: boolean; reason?: string; next?: VolRewards } {
   const block = redeemBlock(perk, prev, lifetimePoints);
-  if (block === 'redeemed') return { ok: false, reason: 'Already redeemed' };
-  if (block === 'tier') return { ok: false, reason: `Reach ${VOL_TIERS[perk.minTierIndex].name} first` };
-  if (block === 'points') return { ok: false, reason: 'Not enough points' };
+  if (block === 'redeemed') return { ok: false, reason: 'rewards.redeem.alreadyRedeemed' };
+  if (block === 'tier') return { ok: false, reason: 'rewards.redeem.reachTier' };
+  if (block === 'points') return { ok: false, reason: 'rewards.redeem.notEnough' };
   const next: VolRewards = {
     ...prev,
     balance: prev.balance - perk.costPoints,

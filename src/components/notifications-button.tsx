@@ -7,10 +7,12 @@ import { Pressable, View } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
+import { useT } from '@/i18n/use-t';
 import { useApp } from '@/store/app-store';
 import { colors, radius } from '@/theme';
 
 export function NotificationsButton({ tone = 'light' }: { tone?: 'light' | 'dark' }) {
+  const t = useT();
   const router = useRouter();
   const s = useApp();
   const me = s.role;
@@ -24,7 +26,9 @@ export function NotificationsButton({ tone = 'light' }: { tone?: 'light' | 'dark
     <Pressable
       onPress={() => router.push('/notifications')}
       accessibilityRole="button"
-      accessibilityLabel={unread > 0 ? `Notifications, ${unread} unread` : 'Notifications'}
+      accessibilityLabel={
+        unread > 0 ? t('notificationsButton.unread', { count: unread }) : t('notifications.title')
+      }
       style={{
         width: 44,
         height: 44,

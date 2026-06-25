@@ -6,6 +6,7 @@
 import { Pressable, type StyleProp, View, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useT } from '@/i18n/use-t';
 import { colors, layout, shadows } from '@/theme';
 
 import { Icon } from './icon';
@@ -31,6 +32,7 @@ export interface BottomNavProps {
 
 export function BottomNav({ items = [], active, onChange, style }: BottomNavProps) {
   const insets = useSafeAreaInsets();
+  const t = useT();
 
   return (
     <View
@@ -56,7 +58,7 @@ export function BottomNav({ items = [], active, onChange, style }: BottomNavProp
               key={it.key}
               onPress={() => onChange?.(it.key)}
               accessibilityRole="button"
-              accessibilityLabel={it.label}
+              accessibilityLabel={t(it.label)}
               style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
             >
               <View
@@ -118,7 +120,7 @@ export function BottomNav({ items = [], active, onChange, style }: BottomNavProp
               ) : null}
             </View>
             <Text size={11} weight={on ? 700 : 600} color={on ? colors.brandStrong : colors.textMuted}>
-              {it.label}
+              {t(it.label)}
             </Text>
           </Pressable>
         );

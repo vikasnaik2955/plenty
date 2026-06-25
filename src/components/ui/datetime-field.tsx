@@ -7,6 +7,7 @@ import DateTimePicker, { type DateTimePickerEvent } from '@react-native-communit
 import { useRef, useState } from 'react';
 import { Modal, Platform, Pressable, View } from 'react-native';
 
+import { useT } from '@/i18n/use-t';
 import { colors, fontSize, radius } from '@/theme';
 import { formatDateTime } from '@/utils/datetime';
 
@@ -24,6 +25,7 @@ export interface DateTimeFieldProps {
 }
 
 export function DateTimeField({ label, hint, value, onChange, minimumDate, accent = colors.textMuted }: DateTimeFieldProps) {
+  const t = useT();
   // Android: 'date' then 'time'. iOS: a single modal.
   const [androidMode, setAndroidMode] = useState<'date' | 'time' | null>(null);
   const [iosOpen, setIosOpen] = useState(false);
@@ -128,7 +130,7 @@ export function DateTimeField({ label, hint, value, onChange, minimumDate, accen
                 setIosOpen(false);
               }}
             >
-              Done
+              {t('common.done')}
             </Button>
           </Pressable>
         </Pressable>

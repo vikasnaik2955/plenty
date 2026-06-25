@@ -16,6 +16,7 @@ import { Page } from '@/components/ui/page';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { SectionHeader } from '@/components/ui/section-header';
 import { Text } from '@/components/ui/text';
+import { useT } from '@/i18n/use-t';
 import { useApp } from '@/store/app-store';
 import { colors, radius, shadows, space } from '@/theme';
 
@@ -24,6 +25,7 @@ const grp = (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 export default function DonorHome() {
   const router = useRouter();
   const s = useApp();
+  const t = useT();
   const p = s.profiles.donor;
 
   const recent = s.data.DONATIONS.filter((d) => ['completed', 'cancelled'].includes(d.status));
@@ -37,7 +39,7 @@ export default function DonorHome() {
       pad={false}
       header={
         <Hero
-          eyebrow="Good evening"
+          eyebrow={t('donorHome.greeting')}
           title={p.name}
           right={
             <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -52,7 +54,7 @@ export default function DonorHome() {
                 {grp(s.rewardPoints)}
               </Text>
               <Text size={12} weight={600} color="#fff" style={{ opacity: 0.85 }}>
-                Reward points
+                {t('donorHome.rewardPoints')}
               </Text>
             </View>
             <View style={styles.statDivider} />
@@ -61,7 +63,7 @@ export default function DonorHome() {
                 {grp(s.peopleHelped)}
               </Text>
               <Text size={12} weight={600} color="#fff" style={{ opacity: 0.85 }}>
-                People helped
+                {t('donorHome.peopleHelped')}
               </Text>
             </View>
           </View>
@@ -75,10 +77,10 @@ export default function DonorHome() {
           </View>
           <View style={{ flex: 1 }}>
             <Text size={17} weight={800} color={colors.textPrimary}>
-              Donate something
+              {t('donorHome.donateTitle')}
             </Text>
             <Text size={13} color={colors.textSecondary}>
-              Food or clothes — takes a minute
+              {t('donorHome.donateSubtitle')}
             </Text>
           </View>
           <Icon name="chevron-right" size={22} color={colors.textMuted} />
@@ -93,39 +95,39 @@ export default function DonorHome() {
           </View>
           <View style={{ flex: 1 }}>
             <Text size={17} weight={800} color={colors.textPrimary}>
-              Add a shelter or community
+              {t('donorHome.addShelterTitle')}
             </Text>
             <Text size={13} color={colors.textSecondary}>
-              Register a place that needs donations
+              {t('donorHome.addShelterSubtitle')}
             </Text>
           </View>
           <Icon name="chevron-right" size={22} color={colors.textMuted} />
         </PressableScale>
 
-        <SectionHeader title="Active requests" />
+        <SectionHeader title={t('donorHome.activeRequests')} />
         <View style={{ gap: 10 }}>
           {liveAlloc ? (
             <DonationCard
               category={liveAlloc.category}
               title={liveAlloc.title}
               status={liveAlloc.current}
-              time={`To ${liveAlloc.consumer}`}
+              time={t('donorHome.toRecipient', { name: liveAlloc.consumer })}
               onPress={() => router.push('/(donor)/track')}
               meta={[
-                { icon: 'users', label: liveAlloc.serves ? `Serves ${liveAlloc.serves}` : (liveAlloc.pieces ?? '') },
-                { icon: 'map-pin', label: `${liveAlloc.distance} km` },
+                { icon: 'users', label: liveAlloc.serves ? t('donorHome.serves', { count: liveAlloc.serves }) : (liveAlloc.pieces ?? '') },
+                { icon: 'map-pin', label: t('donorHome.km', { distance: liveAlloc.distance }) },
               ]}
             />
           ) : (
             <Text size={13} color={colors.textMuted}>
-              No active requests yet — donate something to get started.
+              {t('donorHome.noActiveRequests')}
             </Text>
           )}
         </View>
 
         <SectionHeader
-          title="Recent history"
-          action="See all"
+          title={t('donorHome.recentHistory')}
+          action={t('common.seeAll')}
           onAction={() => router.push('/(donor)/history')}
         />
         <View style={{ gap: 10 }}>
@@ -136,7 +138,7 @@ export default function DonorHome() {
               title={d.title}
               status={d.status}
               time={d.time}
-              meta={[{ icon: 'users', label: d.serves ? `Serves ${d.serves}` : (d.pieces ?? '') }]}
+              meta={[{ icon: 'users', label: d.serves ? t('donorHome.serves', { count: d.serves }) : (d.pieces ?? '') }]}
               onPress={() => router.push({ pathname: '/delivery', params: { id: d.id } })}
             />
           ))}

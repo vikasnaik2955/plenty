@@ -12,6 +12,7 @@ import { Animated, Easing, StyleSheet, View } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
+import { useT } from '@/i18n/use-t';
 import { colors, radius, shadows, space } from '@/theme';
 import type { Category } from '@/data/types';
 
@@ -29,20 +30,30 @@ const RING_DURATION = 2200;
 const mmss = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
 export function DonorWaitingCard({ category, consumer, serves, expiresAt }: DonorWaitingCardProps) {
+  const t = useT();
   const accent = category === 'food' ? colors.food : colors.clothes;
   const accentSoft = category === 'food' ? colors.foodSoft : colors.clothesSoft;
 
   // Motivating messages that rotate during the wait.
   const messages = useMemo(
     () => [
-      `📡  Pinging volunteers within 5 km of you…`,
-      `🍱  Your ${category === 'food' ? 'meal' : 'donation'} could brighten ${serves ? `${serves} ` : ''}someone's day.`,
-      `💚  Most requests get picked up within minutes.`,
-      `♻️  You're keeping good ${category === 'food' ? 'food' : 'clothes'} out of the bin.`,
-      `⭐  Generous donors like you served 38+ people this week.`,
-      `🙌  Hang tight — a volunteer is usually just around the corner.`,
+      t('donorWaiting.msgPinging'),
+      serves
+        ? t('donorWaiting.msgBrightenCount', {
+            gift: category === 'food' ? t('donorWaiting.giftMeal') : t('donorWaiting.giftDonation'),
+            count: serves,
+          })
+        : t('donorWaiting.msgBrighten', {
+            gift: category === 'food' ? t('donorWaiting.giftMeal') : t('donorWaiting.giftDonation'),
+          }),
+      t('donorWaiting.msgPickedUpSoon'),
+      t('donorWaiting.msgOutOfBin', {
+        goods: category === 'food' ? t('donorWaiting.goodsFood') : t('donorWaiting.goodsClothes'),
+      }),
+      t('donorWaiting.msgServedThisWeek'),
+      t('donorWaiting.msgHangTight'),
     ],
-    [category, serves],
+    [category, serves, t],
   );
 
   // --- Radar sweep: staggered expanding rings ---------------------------------
@@ -124,10 +135,10 @@ export function DonorWaitingCard({ category, consumer, serves, expiresAt }: Dono
       </View>
 
       <Text size={17} weight={800} color={colors.textPrimary} style={styles.center}>
-        Finding a volunteer nearby…
+        {t('donorWaiting.findingNearby')}
       </Text>
       <Text size={13} color={colors.textMuted} style={[styles.center, { marginTop: 2 }]}>
-        We&apos;re reaching volunteers near {consumer}.
+        {t('donorWaiting.reachingNear', { consumer })}
       </Text>
 
       {/* Rotating engagement message */}
@@ -152,8 +163,8 @@ export function DonorWaitingCard({ category, consumer, serves, expiresAt }: Dono
             <Icon name="clock" size={14} color={urgent ? colors.warning : colors.textMuted} />
             <Text size={12} weight={700} color={urgent ? colors.warning : colors.textMuted}>
               {remainingS > 0
-                ? `Auto-cancels in ${mmss(remainingS)} if no one accepts`
-                : 'Wrapping up the search…'}
+                ? t('donorWaiting.autoCancelsIn', { time: mmss(remainingS) })
+                : t('donorWaiting.wrappingUp')}
             </Text>
           </View>
           <View style={styles.track}>

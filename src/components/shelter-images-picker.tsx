@@ -9,6 +9,7 @@ import { Alert, Pressable, ScrollView, View } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
+import { useT } from '@/i18n/use-t';
 import { colors, radius } from '@/theme';
 
 const TILE = 96;
@@ -24,13 +25,14 @@ export function ShelterImagesPicker({
   accent?: string;
   max?: number;
 }) {
+  const t = useT();
   const remaining = Math.max(0, max - value.length);
 
   const takePhoto = async () => {
     if (remaining === 0) return;
     const perm = await ImagePicker.requestCameraPermissionsAsync();
     if (!perm.granted) {
-      Alert.alert('Camera access needed', 'Enable camera permission to take a photo.');
+      Alert.alert(t('photoPicker.cameraAccessTitle'), t('photoPicker.cameraAccessMessage'));
       return;
     }
     const result = await ImagePicker.launchCameraAsync({ mediaTypes: 'images', quality: 0.8 });
@@ -53,10 +55,10 @@ export function ShelterImagesPicker({
 
   const add = () => {
     if (remaining === 0) return;
-    Alert.alert('Add photos', undefined, [
-      { text: 'Take photo', onPress: takePhoto },
-      { text: 'Choose from gallery', onPress: pickFromGallery },
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('shelterImages.addPhotos'), undefined, [
+      { text: t('photoPicker.takePhoto'), onPress: takePhoto },
+      { text: t('photoPicker.chooseFromGallery'), onPress: pickFromGallery },
+      { text: t('common.cancel'), style: 'cancel' },
     ]);
   };
 
@@ -78,7 +80,7 @@ export function ShelterImagesPicker({
           <Pressable
             onPress={() => removeAt(i)}
             accessibilityRole="button"
-            accessibilityLabel="Remove photo"
+            accessibilityLabel={t('shelterImages.removePhoto')}
             hitSlop={6}
             style={{
               position: 'absolute',
@@ -101,7 +103,7 @@ export function ShelterImagesPicker({
         <Pressable
           onPress={add}
           accessibilityRole="button"
-          accessibilityLabel="Add location photos"
+          accessibilityLabel={t('shelterImages.addLocationPhotos')}
           style={{
             width: TILE,
             height: TILE,
@@ -117,7 +119,7 @@ export function ShelterImagesPicker({
         >
           <Icon name="image-plus" size={24} color={accent} />
           <Text size={12} weight={700} color={colors.textMuted}>
-            Add photos
+            {t('shelterImages.addPhotos')}
           </Text>
         </Pressable>
       )}

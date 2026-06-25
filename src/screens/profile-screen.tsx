@@ -17,12 +17,14 @@ import { Page } from '@/components/ui/page';
 import { PhotoPicker } from '@/components/ui/photo-picker';
 import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
+import { useT } from '@/i18n/use-t';
 import { useApp } from '@/store/app-store';
 import { colors, radius, shadows, space } from '@/theme';
 import type { Role } from '@/data/types';
 
 export function ProfileScreen({ role }: { role: Role }) {
   const router = useRouter();
+  const t = useT();
   const s = useApp();
   const { profiles, updateProfile, showToast } = s;
   const p = profiles[role];
@@ -31,12 +33,12 @@ export function ProfileScreen({ role }: { role: Role }) {
   const settings = [
     {
       icon: 'map-pin',
-      label: 'Saved addresses',
+      label: t('profile.savedAddresses'),
       value: defaultAddress?.label,
       onPress: () => router.push('/addresses'),
     },
-    { icon: 'globe', label: 'Language', value: s.language, onPress: () => router.push('/language') },
-    { icon: 'circle-help', label: 'Help & support', onPress: () => router.push('/help') },
+    { icon: 'globe', label: t('profile.language'), value: s.language, onPress: () => router.push('/language') },
+    { icon: 'circle-help', label: t('profile.helpSupport'), onPress: () => router.push('/help') },
   ];
 
   const [editing, setEditing] = useState(false);
@@ -51,7 +53,7 @@ export function ProfileScreen({ role }: { role: Role }) {
   const save = () => {
     updateProfile(role, { name: draftName, photo: draftPhoto });
     setEditing(false);
-    showToast('Profile updated', 'success');
+    showToast(t('profile.toastUpdated'), 'success');
   };
 
   return (
@@ -59,12 +61,12 @@ export function ProfileScreen({ role }: { role: Role }) {
       nav={<RoleBottomNav role={role} active="profile" />}
       header={
         <AppBar
-          title="Profile"
+          title={t('profile.title')}
           align="center"
           action={
             <Pressable onPress={() => setEditing(true)} hitSlop={8}>
               <Text variant="sm" weight={700} color={colors.brandStrong}>
-                Edit
+                {t('common.edit')}
               </Text>
             </Pressable>
           }
@@ -77,13 +79,13 @@ export function ProfileScreen({ role }: { role: Role }) {
           {p.name}
         </Text>
         <Text variant="caption" color={colors.textMuted} style={{ textTransform: 'capitalize' }}>
-          {role} · {p.sub}
+          {t(`role.${role}`)} · {p.sub}
         </Text>
       </View>
 
       <View style={styles.card}>
-        <Row icon="user" label="Edit profile" onPress={() => setEditing(true)} first />
-        <Row icon="history" label="Delivery history" onPress={() => router.push('/deliveries')} />
+        <Row icon="user" label={t('profile.editProfile')} onPress={() => setEditing(true)} first />
+        <Row icon="history" label={t('profile.deliveryHistory')} onPress={() => router.push('/deliveries')} />
         {settings.map((it, i) => (
           <Row
             key={it.label}
@@ -99,33 +101,33 @@ export function ProfileScreen({ role }: { role: Role }) {
       <View style={[styles.card, styles.pushRow]}>
         <Icon name="bell" size={20} color={colors.textSecondary} />
         <Text variant="body" weight={600} style={{ flex: 1 }}>
-          Push notifications
+          {t('profile.pushNotifications')}
         </Text>
         <Switch checked={s.pushEnabled} onChange={s.setPushEnabled} />
       </View>
 
       <Button variant="secondary" fullWidth leftIcon="repeat" onPress={() => router.replace('/roles')}>
-        Switch role
+        {t('profile.switchRole')}
       </Button>
 
       <BottomSheet
         open={editing}
-        title="Edit profile"
+        title={t('profile.editProfile')}
         onClose={() => setEditing(false)}
         footer={
           <Button fullWidth size="lg" disabled={!draftName.trim()} onPress={save}>
-            Save changes
+            {t('profile.saveChanges')}
           </Button>
         }
       >
         <View style={{ alignItems: 'center', gap: space[2], marginBottom: space[4] }}>
           <PhotoPickerCircle value={draftPhoto} onPick={setDraftPhoto} />
           <Text variant="caption" color={colors.textMuted} weight={600}>
-            Tap to choose from gallery
+            {t('profile.tapToChoose')}
           </Text>
         </View>
         <Input
-          label="Display name"
+          label={t('profile.displayName')}
           value={draftName}
           onChangeText={setDraftName}
           leftIcon={<Icon name="user" size={18} color={colors.textMuted} />}
@@ -176,8 +178,9 @@ function PhotoPickerCircle({
   value: string | null;
   onPick: (uri: string) => void;
 }) {
+  const t = useT();
   return (
-    <PhotoPicker shape="circle" size={92} value={value ?? undefined} onPick={onPick} label="Photo" />
+    <PhotoPicker shape="circle" size={92} value={value ?? undefined} onPick={onPick} label={t('profile.photo')} />
   );
 }
 

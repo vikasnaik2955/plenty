@@ -10,6 +10,7 @@ import { AppBar } from '@/components/ui/app-bar';
 import { Icon } from '@/components/ui/icon';
 import { Page } from '@/components/ui/page';
 import { Text } from '@/components/ui/text';
+import { useT } from '@/i18n/use-t';
 import { useApp } from '@/store/app-store';
 import { colors, radius, shadows, space } from '@/theme';
 
@@ -27,17 +28,18 @@ const LANGUAGES: { name: string; native: string }[] = [
 export default function LanguageScreen() {
   const router = useRouter();
   const s = useApp();
+  const t = useT();
 
   const choose = (name: string) => {
     s.setLanguage(name);
-    s.showToast(`Language set to ${name}`, 'success');
+    s.showToast(t('language.setTo', { name }), 'success');
     router.back();
   };
 
   return (
-    <Page header={<AppBar title="Language" onBack={() => router.back()} />}>
+    <Page header={<AppBar title={t('language.title')} onBack={() => router.back()} />}>
       <Text variant="caption" color={colors.textMuted} style={{ marginBottom: space[3] }}>
-        Choose your preferred language for the app.
+        {t('language.subtitle')}
       </Text>
       <View style={styles.card}>
         {LANGUAGES.map((l, i) => {

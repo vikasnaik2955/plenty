@@ -14,6 +14,7 @@ import { Icon } from '@/components/ui/icon';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Text } from '@/components/ui/text';
 import { geoForName } from '@/config/geo';
+import { useT } from '@/i18n/use-t';
 import { colors, palette, radius, shadows, space } from '@/theme';
 import { openDirections } from '@/utils/contact';
 import type { Status } from '@/data/types';
@@ -30,6 +31,7 @@ const KIND_COLOR: Record<PointKind, string> = {
 
 export default function TrackMapScreen() {
   const router = useRouter();
+  const t = useT();
   const insets = useSafeAreaInsets();
   const p = useLocalSearchParams<{
     title?: string;
@@ -40,19 +42,19 @@ export default function TrackMapScreen() {
     status?: string;
   }>();
 
-  const pickup = p.pickup || 'Donor';
-  const dropoff = p.dropoff || 'Recipient';
+  const pickup = p.pickup || t('role.donor');
+  const dropoff = p.dropoff || t('trackMap.recipient');
   const status = LIFECYCLE.includes(p.status as Status) ? (p.status as Status) : undefined;
 
   const points: TrackPoint[] = [
-    { id: 'pickup', kind: 'pickup', geo: geoForName(pickup), label: `Pickup · ${pickup}` },
-    { id: 'dropoff', kind: 'dropoff', geo: geoForName(dropoff), label: `Drop-off · ${dropoff}` },
+    { id: 'pickup', kind: 'pickup', geo: geoForName(pickup), label: t('trackMap.pickupLabel', { name: pickup }) },
+    { id: 'dropoff', kind: 'dropoff', geo: geoForName(dropoff), label: t('trackMap.dropoffLabel', { name: dropoff }) },
   ];
   if (p.volunteer) {
-    points.push({ id: 'volunteer', kind: 'volunteer', geo: geoForName(p.volunteer), label: `Volunteer · ${p.volunteer}` });
+    points.push({ id: 'volunteer', kind: 'volunteer', geo: geoForName(p.volunteer), label: t('trackMap.volunteerLabel', { name: p.volunteer }) });
   }
   if (p.transport) {
-    points.push({ id: 'transport', kind: 'transport', geo: geoForName(p.transport), label: `Transport · ${p.transport}` });
+    points.push({ id: 'transport', kind: 'transport', geo: geoForName(p.transport), label: t('trackMap.transportLabel', { name: p.transport }) });
   }
 
   const legend: { kind: PointKind; label: string }[] = [
@@ -64,7 +66,7 @@ export default function TrackMapScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.surfacePage }}>
-      <AppBar title={p.title || 'Track delivery'} onBack={() => router.back()} />
+      <AppBar title={p.title || t('trackMap.title')} onBack={() => router.back()} />
 
       <View style={{ flex: 1 }}>
         <RouteMap points={points} fill />
@@ -74,7 +76,7 @@ export default function TrackMapScreen() {
         {status && (
           <View style={styles.statusRow}>
             <Text variant="sm" weight={700}>
-              Current delivery
+              {t('trackMap.currentDelivery')}
             </Text>
             <StatusBadge status={status} size="sm" />
           </View>
@@ -92,12 +94,12 @@ export default function TrackMapScreen() {
         <Pressable
           onPress={() => openDirections(geoForName(dropoff), geoForName(pickup))}
           accessibilityRole="button"
-          accessibilityLabel="Get directions in Google Maps"
+          accessibilityLabel={t('trackMap.directionsA11y')}
           style={styles.directions}
         >
           <Icon name="navigation" size={16} color="#fff" />
           <Text variant="body" weight={700} color="#fff">
-            Get directions
+            {t('trackMap.getDirections')}
           </Text>
         </Pressable>
       </View>

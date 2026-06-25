@@ -12,19 +12,22 @@ import { Page } from '@/components/ui/page';
 import { SectionHeader } from '@/components/ui/section-header';
 import { StatCard } from '@/components/ui/stat-card';
 import { Text } from '@/components/ui/text';
+import { useT } from '@/i18n/use-t';
 import { useApp } from '@/store/app-store';
 import { colors, palette, radius, shadows, space } from '@/theme';
 
 const grp = (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
+// Static demo ledger. `reasonKey`/`timeKey` are translated at render time.
 const LEDGER = [
-  { reason: 'Winter jackets delivered', pts: 60, time: 'Yesterday' },
-  { reason: 'Rice & dal delivered', pts: 90, time: '2 days ago' },
-  { reason: 'Cooked meals delivered', pts: 45, time: '5 days ago' },
-  { reason: 'First donation bonus', pts: 100, time: 'Last month' },
+  { reasonKey: 'donorRewards.ledgerJackets', pts: 60, timeKey: 'donorRewards.timeYesterday' },
+  { reasonKey: 'donorRewards.ledgerRiceDal', pts: 90, timeKey: 'donorRewards.timeTwoDays' },
+  { reasonKey: 'donorRewards.ledgerCookedMeals', pts: 45, timeKey: 'donorRewards.timeFiveDays' },
+  { reasonKey: 'donorRewards.ledgerFirstBonus', pts: 100, timeKey: 'donorRewards.timeLastMonth' },
 ];
 
 export default function DonorRewards() {
+  const t = useT();
   const s = useApp();
 
   return (
@@ -35,8 +38,8 @@ export default function DonorRewards() {
         <Hero
           accent={palette.gold400}
           accent2={palette.gold600}
-          eyebrow="Plenty Rewards"
-          title="Gold giver"
+          eyebrow={t('donorRewards.eyebrow')}
+          title={t('donorRewards.title')}
           right={
             <View
               style={{
@@ -57,7 +60,7 @@ export default function DonorRewards() {
               {grp(s.rewardPoints)}
             </Text>
             <Text size={13} weight={600} color="#fff" style={{ opacity: 0.9, marginTop: 4 }}>
-              points · 260 to Platinum
+              {t('donorRewards.pointsToPlatinum')}
             </Text>
             <View style={styles.barTrack}>
               <View style={styles.barFill} />
@@ -67,11 +70,11 @@ export default function DonorRewards() {
       }
     >
       <View style={{ paddingHorizontal: space[5], paddingTop: space[4], flexDirection: 'row', gap: 12 }}>
-        <StatCard value="38" label="Donations" accent="reward" icon={<Icon name="gift" />} />
-        <StatCard value="12" label="This month" accent="brand" icon={<Icon name="calendar" />} trend="+4" />
+        <StatCard value="38" label={t('donorRewards.statDonations')} accent="reward" icon={<Icon name="gift" />} />
+        <StatCard value="12" label={t('donorRewards.statThisMonth')} accent="brand" icon={<Icon name="calendar" />} trend="+4" />
       </View>
       <View style={{ paddingHorizontal: space[5] }}>
-        <SectionHeader title="Points history" />
+        <SectionHeader title={t('donorRewards.pointsHistory')} />
         <View style={styles.ledger}>
           {LEDGER.map((l, i) => (
             <View
@@ -89,10 +92,10 @@ export default function DonorRewards() {
               </View>
               <View style={{ flex: 1 }}>
                 <Text size={14} weight={700} color={colors.textPrimary}>
-                  {l.reason}
+                  {t(l.reasonKey)}
                 </Text>
                 <Text size={12} color={colors.textMuted}>
-                  {l.time}
+                  {t(l.timeKey)}
                 </Text>
               </View>
               <Text size={15} weight={800} color={palette.gold600}>

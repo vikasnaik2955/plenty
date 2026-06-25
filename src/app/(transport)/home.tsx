@@ -20,6 +20,7 @@ import { SectionHeader } from '@/components/ui/section-header';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
+import { useT } from '@/i18n/use-t';
 import { useApp } from '@/store/app-store';
 import { colors, palette, radius, shadows, space } from '@/theme';
 import type { OpenRequest } from '@/data/types';
@@ -29,6 +30,7 @@ const vIcon = (t: string) => (t === 'Cargo van' ? 'truck' : t === 'Two-wheeler' 
 export default function TransportHome() {
   const router = useRouter();
   const s = useApp();
+  const t = useT();
   const profile = s.profiles.transport;
 
   const online = s.transportOnline;
@@ -56,7 +58,7 @@ export default function TransportHome() {
       return;
     }
     if (availableVehicles.length === 0) {
-      s.showToast('Add an available vehicle first', 'error');
+      s.showToast(t('transportHome.addVehicleFirst'), 'error');
       router.push('/(transport)/vehicle');
       return;
     }
@@ -75,7 +77,7 @@ export default function TransportHome() {
         <Hero
           accent={palette.violet500}
           accent2="#4B3CA8"
-          eyebrow="Transport"
+          eyebrow={t('transportHome.eyebrow')}
           title={profile.name}
           right={
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -89,20 +91,24 @@ export default function TransportHome() {
             <View style={{ flex: 1 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <Text size={15} weight={800} color="#fff">
-                  {online ? 'Online' : 'Offline'}
+                  {online ? t('transportHome.online') : t('transportHome.offline')}
                 </Text>
                 {verified && (
                   <View style={styles.verifiedPill}>
                     <Icon name="shield-check" size={12} color="#fff" />
                     <Text size={11} weight={800} color="#fff">
-                      Verified
+                      {t('transportHome.verified')}
                     </Text>
                   </View>
                 )}
               </View>
               <Text size={12} color="#fff" style={{ opacity: 0.85 }}>
-                {s.transportVehicles.length} {s.transportVehicles.length === 1 ? 'vehicle' : 'vehicles'} ·{' '}
-                {availableVehicles.length} available
+                {s.transportVehicles.length === 1
+                  ? t('transportHome.vehicleCountAvailableOne', { available: availableVehicles.length })
+                  : t('transportHome.vehicleCountAvailableOther', {
+                      count: s.transportVehicles.length,
+                      available: availableVehicles.length,
+                    })}
               </Text>
             </View>
             <Switch checked={online} onChange={s.setTransportOnline} />
@@ -118,27 +124,36 @@ export default function TransportHome() {
             </View>
             <View style={{ flex: 1 }}>
               <Text variant="body" weight={700}>
-                {s.transportVerification.status === 'pending' ? 'Verification under review' : 'Get verified to offer rides'}
+                {s.transportVerification.status === 'pending'
+                  ? t('transportHome.verifyBannerPending')
+                  : t('transportHome.verifyBannerTitle')}
               </Text>
               <Text variant="caption" color={colors.textMuted}>
-                Add your name and driving licence to start.
+                {t('transportHome.verifyBannerSubtitle')}
               </Text>
             </View>
             <Icon name="chevron-right" size={20} color={colors.textMuted} />
           </Pressable>
         )}
 
-        <SectionHeader title={`Available jobs${online ? ` · ${jobs.length}` : ''}`} />
+        <SectionHeader
+          title={online ? t('transportHome.availableJobsCount', { count: jobs.length }) : t('transportHome.availableJobs')}
+        />
         {!online ? (
           <EmptyState
             compact
             icon="moon"
-            title="You're offline"
-            message="Go online to see delivery jobs that need a ride."
+            title={t('transportHome.offlineTitle')}
+            message={t('transportHome.offlineMessage')}
             accent="neutral"
           />
         ) : jobs.length === 0 ? (
-          <EmptyState compact icon="check-check" title="All clear" message="No delivery jobs need a ride right now." />
+          <EmptyState
+            compact
+            icon="check-check"
+            title={t('transportHome.allClearTitle')}
+            message={t('transportHome.allClearMessage')}
+          />
         ) : (
           <View style={{ gap: 10 }}>
             {jobs.map((r) => {
@@ -173,12 +188,14 @@ export default function TransportHome() {
                   <View style={styles.jobActions}>
                     {accepted ? (
                       <StatusBadge tone="success" dot={false} size="sm">
-                        Accepted{myOffer?.acceptedBy ? ` · ${myOffer.acceptedBy}` : ''}
+                        {myOffer?.acceptedBy
+                          ? t('transportHome.acceptedBy', { name: myOffer.acceptedBy })
+                          : t('transportHome.accepted')}
                       </StatusBadge>
                     ) : offered ? (
                       <>
                         <StatusBadge tone="info" dot={false} size="sm">
-                          Offered
+                          {t('transportHome.offered')}
                         </StatusBadge>
                         <Pressable
                           onPress={() => s.withdrawTransport(r.id)}
@@ -186,7 +203,7 @@ export default function TransportHome() {
                           style={[styles.offerBtn, styles.offerBtnOff]}
                         >
                           <Text size={13} weight={700} color={colors.textSecondary}>
-                            Withdraw
+                            {t('transportHome.withdraw')}
                           </Text>
                         </Pressable>
                       </>
@@ -197,7 +214,7 @@ export default function TransportHome() {
                         style={[styles.offerBtn, verified ? styles.offerBtnOn : styles.offerBtnWarn]}
                       >
                         <Text size={13} weight={700} color="#fff">
-                          {verified ? 'Offer ride' : 'Verify to offer'}
+                          {verified ? t('transportHome.offerRide') : t('transportHome.verifyToOffer')}
                         </Text>
                       </Pressable>
                     )}
@@ -210,12 +227,14 @@ export default function TransportHome() {
 
         {offeredCount > 0 && (
           <Text variant="caption" color={colors.textMuted} style={{ marginTop: space[3] }}>
-            {offeredCount} {offeredCount === 1 ? 'offer' : 'offers'} made · {acceptedCount} accepted by volunteers.
+            {offeredCount === 1
+              ? t('transportHome.offersSummaryOne', { accepted: acceptedCount })
+              : t('transportHome.offersSummaryOther', { count: offeredCount, accepted: acceptedCount })}
           </Text>
         )}
       </View>
 
-      <BottomSheet open={!!pickFor} title="Choose a vehicle" onClose={() => setPickFor(null)}>
+      <BottomSheet open={!!pickFor} title={t('transportHome.chooseVehicle')} onClose={() => setPickFor(null)}>
         <View style={{ gap: 10 }}>
           {availableVehicles.map((v) => (
             <Pressable
@@ -239,7 +258,7 @@ export default function TransportHome() {
                 </Text>
               </View>
               <StatusBadge tone={v.pricing === 'free' ? 'success' : 'food'} dot={false} size="sm">
-                {v.pricing === 'free' ? 'Free' : v.fare || 'Paid'}
+                {v.pricing === 'free' ? t('transportHome.free') : v.fare || t('transportHome.paid')}
               </StatusBadge>
             </Pressable>
           ))}

@@ -18,12 +18,14 @@ import { Page } from '@/components/ui/page';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Tabs } from '@/components/ui/tabs';
 import { Text } from '@/components/ui/text';
+import { useT } from '@/i18n/use-t';
 import { useApp } from '@/store/app-store';
 import { colors, radius, shadows, space } from '@/theme';
 import type { Allocation } from '@/data/types';
 
 export default function AdmAllocations() {
   const router = useRouter();
+  const t = useT();
   const s = useApp();
   const [f, setF] = useState('all');
   const [sel, setSel] = useState<Allocation | null>(null);
@@ -37,16 +39,16 @@ export default function AdmAllocations() {
   return (
     <Page
       nav={<RoleBottomNav role="admin" active="alloc" />}
-      header={<AppBar title="Allocations" align="center" />}
+      header={<AppBar title={t('admAlloc.title')} align="center" />}
     >
       <Tabs
         variant="underline"
         active={f}
         onChange={setF}
         items={[
-          { key: 'all', label: 'All' },
-          { key: 'active', label: 'Active' },
-          { key: 'done', label: 'Completed' },
+          { key: 'all', label: t('admAlloc.tabAll') },
+          { key: 'active', label: t('admAlloc.tabActive') },
+          { key: 'done', label: t('status.completed') },
         ]}
         style={{ marginBottom: 14 }}
       />
@@ -89,7 +91,7 @@ export default function AdmAllocations() {
                   pathname: '/track-map',
                   params: {
                     title: a.item,
-                    pickup: 'Donor',
+                    pickup: t('admAlloc.donor'),
                     dropoff: a.consumer,
                     volunteer: a.volunteer && a.volunteer !== '—' ? a.volunteer : '',
                     status: a.status,
@@ -97,7 +99,7 @@ export default function AdmAllocations() {
                 });
               }}
             >
-              Track on map
+              {t('admAlloc.trackOnMap')}
             </Button>
           )
         }
@@ -106,16 +108,16 @@ export default function AdmAllocations() {
           <View>
             <View style={styles.statusRow}>
               <Text size={13} color={colors.textMuted} weight={600}>
-                Current status
+                {t('admAlloc.currentStatus')}
               </Text>
               <StatusBadge status={sel.status} size="sm" />
             </View>
-            <DetailRow icon="building-2" label="Recipient" value={sel.consumer} />
-            <DetailRow icon="bike" label="Volunteer" value={sel.volunteer} />
+            <DetailRow icon="building-2" label={t('admAlloc.recipient')} value={sel.consumer} />
+            <DetailRow icon="bike" label={t('role.volunteer')} value={sel.volunteer} />
 
             <View style={{ marginTop: 16 }}>
               <Text size={13} weight={800} color={colors.textPrimary} style={{ marginBottom: 10 }}>
-                Progress photos
+                {t('admAlloc.progressPhotos')}
               </Text>
               <ProgressPhotos proofs={proofs} />
             </View>

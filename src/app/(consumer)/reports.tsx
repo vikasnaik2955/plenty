@@ -12,6 +12,7 @@ import { Page } from '@/components/ui/page';
 import { StatCard } from '@/components/ui/stat-card';
 import { Tabs } from '@/components/ui/tabs';
 import { Text } from '@/components/ui/text';
+import { useT } from '@/i18n/use-t';
 import { colors, palette, radius, shadows } from '@/theme';
 
 const MONTH_BARS = [
@@ -29,6 +30,7 @@ const YEAR_BARS = [
 const MAX = 100;
 
 export default function ConReports() {
+  const t = useT();
   const [period, setPeriod] = useState('month');
   const isMonth = period === 'month';
   const bars = isMonth ? MONTH_BARS : YEAR_BARS;
@@ -36,26 +38,26 @@ export default function ConReports() {
   return (
     <Page
       nav={<RoleBottomNav role="consumer" active="reports" />}
-      header={<AppBar title="Reports" align="center" />}
+      header={<AppBar title={t('conReports.title')} align="center" />}
     >
       <Tabs
         active={period}
         onChange={setPeriod}
         items={[
-          { key: 'month', label: 'Monthly' },
-          { key: 'year', label: 'Yearly' },
+          { key: 'month', label: t('conReports.monthly') },
+          { key: 'year', label: t('conReports.yearly') },
         ]}
         style={{ marginBottom: 16 }}
       />
 
       <View style={styles.stats}>
-        <StatCard value={isMonth ? '214' : '2,480'} label="Meals received" accent="food" trend="+12%" icon={<Icon name="utensils" size={20} color={palette.orange600} />} />
-        <StatCard value={isMonth ? '86' : '910'} label="Items received" accent="clothes" trend="+8%" icon={<Icon name="shirt" size={20} color={palette.teal600} />} />
+        <StatCard value={isMonth ? '214' : '2,480'} label={t('conReports.mealsReceived')} accent="food" trend="+12%" icon={<Icon name="utensils" size={20} color={palette.orange600} />} />
+        <StatCard value={isMonth ? '86' : '910'} label={t('conReports.itemsReceived')} accent="clothes" trend="+8%" icon={<Icon name="shirt" size={20} color={palette.teal600} />} />
       </View>
 
       <View style={styles.chartCard}>
         <Text size={14} weight={800} color={colors.textPrimary} style={{ marginBottom: 16 }}>
-          Donations received
+          {t('conReports.donationsReceived')}
         </Text>
         <View style={styles.chartRow}>
           {bars.map((b, i) => (
@@ -82,7 +84,9 @@ export default function ConReports() {
           <Icon name="trending-up" size={20} color="#fff" />
         </View>
         <Text size={13} weight={600} color={palette.green800} style={{ flex: 1 }}>
-          You served {isMonth ? '300' : '3,390'} people through Plenty {isMonth ? 'this month' : 'this year'}.
+          {isMonth
+            ? t('conReports.insightMonth', { count: '300' })
+            : t('conReports.insightYear', { count: '3,390' })}
         </Text>
       </View>
     </Page>

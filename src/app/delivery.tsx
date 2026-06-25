@@ -22,12 +22,14 @@ import { Text } from '@/components/ui/text';
 import { Textarea } from '@/components/ui/textarea';
 import { Timeline } from '@/components/ui/timeline';
 import { VolunteerCard } from '@/components/ui/volunteer-card';
+import { useT } from '@/i18n/use-t';
 import { useApp } from '@/store/app-store';
-import { STATUS_LABEL, colors, radius, shadows, space } from '@/theme';
+import { colors, radius, shadows, space } from '@/theme';
 import { callNumber } from '@/utils/contact';
 
 export default function DeliveryDetail() {
   const router = useRouter();
+  const t = useT();
   const s = useApp();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const donation = s.data.DONATIONS.find((d) => d.id === id);
@@ -42,8 +44,8 @@ export default function DeliveryDetail() {
 
   if (!donation) {
     return (
-      <Page header={<AppBar title="Delivery" onBack={() => router.back()} />}>
-        <EmptyState icon="package-x" title="Not found" message="This delivery is no longer available." />
+      <Page header={<AppBar title={t('delivery.title')} onBack={() => router.back()} />}>
+        <EmptyState icon="package-x" title={t('delivery.notFoundTitle')} message={t('delivery.notFoundMessage')} />
       </Page>
     );
   }
@@ -63,15 +65,15 @@ export default function DeliveryDetail() {
     setEditing(false);
   };
 
-  const qtyLabel = isFood ? 'How many people does it serve?' : 'Quantity';
+  const qtyLabel = isFood ? t('delivery.servesQuestion') : t('delivery.quantity');
 
   return (
     <Page
-      header={<AppBar title="Delivery details" onBack={() => router.back()} />}
+      header={<AppBar title={t('delivery.detailsTitle')} onBack={() => router.back()} />}
       footer={
         canEdit ? (
           <Button fullWidth size="lg" leftIcon="pencil" onPress={() => setEditing(true)}>
-            Edit donation
+            {t('delivery.editDonation')}
           </Button>
         ) : undefined
       }
@@ -92,23 +94,23 @@ export default function DeliveryDetail() {
       </View>
 
       <View style={styles.card}>
-        <DetailRow icon="building-2" label="Recipient" value={donation.consumer} />
+        <DetailRow icon="building-2" label={t('delivery.recipient')} value={donation.consumer} />
         <DetailRow
           icon="users"
-          label={isFood ? 'Serves' : 'Quantity'}
-          value={isFood ? `${donation.serves ?? '—'} people` : (donation.pieces ?? '—')}
+          label={isFood ? t('delivery.serves') : t('delivery.quantity')}
+          value={isFood ? t('delivery.servesPeople', { count: donation.serves ?? '—' }) : (donation.pieces ?? '—')}
         />
-        <DetailRow icon="navigation" label="Distance" value={`${donation.distance} km away`} />
+        <DetailRow icon="navigation" label={t('delivery.distance')} value={t('delivery.kmAway', { distance: donation.distance })} />
         {donation.points != null && (
-          <DetailRow icon="award" label="Reward" value={`+${donation.points} points`} />
+          <DetailRow icon="award" label={t('delivery.reward')} value={t('delivery.points', { count: donation.points })} />
         )}
-        {donation.note ? <DetailRow icon="sticky-note" label="Note" value={donation.note} /> : null}
+        {donation.note ? <DetailRow icon="sticky-note" label={t('delivery.note')} value={donation.note} /> : null}
       </View>
 
       {hasVolunteer && (
         <>
           <Text variant="sm" weight={800} style={styles.section}>
-            Volunteer
+            {t('delivery.volunteer')}
           </Text>
           <VolunteerCard
             name={donation.volunteer}
@@ -126,7 +128,7 @@ export default function DeliveryDetail() {
       {donation.transport && (
         <>
           <Text variant="sm" weight={800} style={styles.section}>
-            Transport
+            {t('delivery.transport')}
           </Text>
           <View style={styles.transportCard}>
             <View style={[styles.headerIcon, { backgroundColor: colors.brandSoft }]}>
@@ -138,8 +140,8 @@ export default function DeliveryDetail() {
               </Text>
               <Text size={12} color={colors.textMuted}>
                 {donation.transport.pricing === 'paid'
-                  ? donation.transport.fare || 'Paid'
-                  : 'Free ride'}
+                  ? donation.transport.fare || t('delivery.paid')
+                  : t('delivery.freeRide')}
               </Text>
             </View>
           </View>
@@ -147,35 +149,35 @@ export default function DeliveryDetail() {
       )}
 
       <Text variant="sm" weight={800} style={styles.section}>
-        Progress photos
+        {t('delivery.progressPhotos')}
       </Text>
       <ProgressPhotos proofs={donation.proofs} />
 
       <Text variant="sm" weight={800} style={styles.section}>
-        Progress
+        {t('delivery.progress')}
       </Text>
       <View style={styles.timelineCard}>
         <Timeline current={donation.status} />
         {finished && (
           <Text variant="caption" color={colors.textMuted} style={{ marginTop: space[2] }}>
-            {STATUS_LABEL[donation.status]} · {donation.time}
+            {t(`status.${donation.status}`)} · {donation.time}
           </Text>
         )}
       </View>
 
       <BottomSheet
         open={editing}
-        title="Edit donation"
+        title={t('delivery.editDonation')}
         onClose={() => setEditing(false)}
         footer={
           <Button fullWidth size="lg" disabled={!title.trim()} onPress={save}>
-            Save changes
+            {t('delivery.saveChanges')}
           </Button>
         }
       >
         <View style={{ gap: space[4] }}>
           <Input
-            label="Title"
+            label={t('delivery.titleLabel')}
             value={title}
             onChangeText={setTitle}
             leftIcon={<Icon name={isFood ? 'utensils' : 'shirt'} size={18} color={colors.textMuted} />}
@@ -187,7 +189,7 @@ export default function DeliveryDetail() {
             keyboardType={isFood ? 'number-pad' : 'default'}
             leftIcon={<Icon name={isFood ? 'users' : 'package'} size={18} color={colors.textMuted} />}
           />
-          <Textarea label="Note" value={note} onChangeText={setNote} maxLength={140} placeholder="Anything the volunteer should know…" />
+          <Textarea label={t('delivery.note')} value={note} onChangeText={setNote} maxLength={140} placeholder={t('delivery.notePlaceholder')} />
         </View>
       </BottomSheet>
     </Page>

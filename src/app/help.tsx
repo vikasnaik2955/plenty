@@ -10,6 +10,7 @@ import { AppBar } from '@/components/ui/app-bar';
 import { Icon } from '@/components/ui/icon';
 import { Page } from '@/components/ui/page';
 import { Text } from '@/components/ui/text';
+import { useT } from '@/i18n/use-t';
 import { useApp } from '@/store/app-store';
 import { colors, radius, shadows, space } from '@/theme';
 import { callNumber } from '@/utils/contact';
@@ -17,44 +18,24 @@ import { callNumber } from '@/utils/contact';
 const SUPPORT_EMAIL = 'support@plenty.app';
 const SUPPORT_PHONE = '+91 98000 12345';
 
-const FAQS: { q: string; a: string }[] = [
-  {
-    q: 'How do I donate food or clothes?',
-    a: 'On the Home tab, tap "Donate something", pick Food or Clothes, fill the quick form, choose a nearby recipient, and confirm. A volunteer will be notified to pick it up.',
-  },
-  {
-    q: 'Who delivers my donation?',
-    a: 'A nearby volunteer accepts your request and handles pickup and delivery. You can add more volunteers to the delivery team, and transport providers can offer a free or paid ride.',
-  },
-  {
-    q: 'Can I track my donation?',
-    a: 'Yes — open the donation to see a live map, the status timeline with times, your volunteer and transport, and the progress photos uploaded at each step.',
-  },
-  {
-    q: 'How are shelters and NGOs added?',
-    a: 'Recipients don’t use the app — donors and volunteers register them via "Add a shelter or community", including location, photos, and the number of people.',
-  },
-  {
-    q: 'Do I earn rewards?',
-    a: 'Donors earn reward points for completed donations, visible on the Rewards tab.',
-  },
-];
+const FAQ_IDS = ['donate', 'delivers', 'track', 'shelters', 'rewards'];
 
 export default function HelpScreen() {
   const router = useRouter();
+  const t = useT();
   const s = useApp();
   const [open, setOpen] = useState<number | null>(0);
 
   return (
-    <Page header={<AppBar title="Help & support" onBack={() => router.back()} />}>
+    <Page header={<AppBar title={t('help.title')} onBack={() => router.back()} />}>
       <Text variant="sm" weight={800} style={styles.section}>
-        Contact us
+        {t('help.contactUs')}
       </Text>
       <View style={styles.card}>
         <ContactRow
           icon="message-circle"
-          label="Chat with support"
-          sub="We usually reply within a few minutes"
+          label={t('help.chatLabel')}
+          sub={t('help.chatSub')}
           onPress={() =>
             router.push({ pathname: '/chat', params: { name: 'Plenty Support', phone: SUPPORT_PHONE } })
           }
@@ -62,38 +43,38 @@ export default function HelpScreen() {
         />
         <ContactRow
           icon="mail"
-          label="Email us"
+          label={t('help.emailLabel')}
           sub={SUPPORT_EMAIL}
           onPress={() =>
             Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=Plenty%20support`).catch(() =>
-              s.showToast('No email app found', 'error'),
+              s.showToast(t('help.noEmailApp'), 'error'),
             )
           }
         />
-        <ContactRow icon="phone" label="Call us" sub={SUPPORT_PHONE} onPress={() => callNumber(SUPPORT_PHONE)} last />
+        <ContactRow icon="phone" label={t('help.callLabel')} sub={SUPPORT_PHONE} onPress={() => callNumber(SUPPORT_PHONE)} last />
       </View>
 
       <Text variant="sm" weight={800} style={styles.section}>
-        Frequently asked
+        {t('help.faqHeading')}
       </Text>
       <View style={styles.card}>
-        {FAQS.map((f, i) => {
+        {FAQ_IDS.map((id, i) => {
           const isOpen = open === i;
           return (
-            <View key={f.q} style={i < FAQS.length - 1 && styles.faqBorder}>
+            <View key={id} style={i < FAQ_IDS.length - 1 && styles.faqBorder}>
               <Pressable
                 onPress={() => setOpen(isOpen ? null : i)}
                 accessibilityRole="button"
                 style={styles.faqHead}
               >
                 <Text variant="body" weight={600} style={{ flex: 1 }}>
-                  {f.q}
+                  {t(`help.faq.${id}.q`)}
                 </Text>
                 <Icon name={isOpen ? 'chevron-up' : 'chevron-down'} size={18} color={colors.textMuted} />
               </Pressable>
               {isOpen && (
                 <Text variant="sm" color={colors.textSecondary} style={styles.faqBody}>
-                  {f.a}
+                  {t(`help.faq.${id}.a`)}
                 </Text>
               )}
             </View>
@@ -102,14 +83,14 @@ export default function HelpScreen() {
       </View>
 
       <Text variant="sm" weight={800} style={styles.section}>
-        About
+        {t('help.aboutHeading')}
       </Text>
       <View style={[styles.card, styles.aboutCard]}>
         <Text variant="body" weight={700}>
           Plenty
         </Text>
         <Text variant="caption" color={colors.textMuted}>
-          Share what&apos;s spare · version 1.0.0
+          {t('help.tagline')}
         </Text>
       </View>
     </Page>

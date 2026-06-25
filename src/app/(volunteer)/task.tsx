@@ -22,6 +22,7 @@ import { SectionHeader } from '@/components/ui/section-header';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Text } from '@/components/ui/text';
 import { Timeline } from '@/components/ui/timeline';
+import { useT } from '@/i18n/use-t';
 import { useApp } from '@/store/app-store';
 import { colors, leading, palette, radius, shadows, space } from '@/theme';
 import { formatStamp } from '@/utils/datetime';
@@ -34,15 +35,15 @@ const NEXT: Record<string, Status> = {
   picked_up: 'delivered',
   delivered: 'completed',
 };
-const NEXT_LABEL: Record<string, string> = {
-  accepted: 'Mark picked up',
-  picked_up: 'Mark delivered',
-  delivered: 'Complete delivery',
+const NEXT_LABEL_KEY: Record<string, string> = {
+  accepted: 'volTask.markPickedUp',
+  picked_up: 'volTask.markDelivered',
+  delivered: 'volTask.completeDelivery',
 };
-const PROOF_WORD: Record<string, string> = {
-  picked_up: 'pickup',
-  delivered: 'delivery',
-  completed: 'completion',
+const PROOF_WORD_KEY: Record<string, string> = {
+  picked_up: 'volTask.proofPickup',
+  delivered: 'volTask.proofDelivery',
+  completed: 'volTask.proofCompletion',
 };
 
 function vehicleIcon(type: string): string {
@@ -53,6 +54,7 @@ function vehicleIcon(type: string): string {
 
 export default function VolTask() {
   const router = useRouter();
+  const tr = useT();
   const s = useApp();
   const t = s.activeTask;
 
@@ -65,11 +67,11 @@ export default function VolTask() {
 
   if (!t) {
     return (
-      <Page header={<AppBar title="Active task" onBack={back} />}>
+      <Page header={<AppBar title={tr('volTask.title')} onBack={back} />}>
         <EmptyState
           icon="clipboard-list"
-          title="No active task"
-          message="Accept a request to start a pickup and delivery."
+          title={tr('volTask.noActiveTaskTitle')}
+          message={tr('volTask.noActiveTaskMessage')}
           accent="neutral"
         />
       </Page>
@@ -97,11 +99,11 @@ export default function VolTask() {
   const assignTransport = (v: Transport) => {
     s.updateVolTask(t.id, { transport: v });
     setTransportSheet(false);
-    s.showToast(`${v.type} requested`, 'success');
+    s.showToast(tr('volTask.toastVehicleRequested', { type: v.type }), 'success');
   };
   const cancelTransport = () => {
     s.updateVolTask(t.id, { transport: null });
-    s.showToast('Transport request cancelled');
+    s.showToast(tr('volTask.toastTransportCancelled'));
   };
   const confirmUpdate = () => {
     if (!photo) return;
@@ -123,19 +125,19 @@ export default function VolTask() {
       });
       setReward(earned);
     } else {
-      s.showToast(`Marked ${n.replace('_', ' ')} · photo saved`, 'success');
+      s.showToast(tr('volTask.toastMarked', { status: tr(`status.${n}`) }), 'success');
     }
   };
 
   return (
     <Page
       header={
-        <AppBar title="Active task" onBack={back} action={<StatusBadge status={t.current} size="sm" />} />
+        <AppBar title={tr('volTask.title')} onBack={back} action={<StatusBadge status={t.current} size="sm" />} />
       }
       footer={
         t.current === 'completed' ? (
           <Button fullWidth variant="secondary" onPress={back}>
-            Back to tasks
+            {tr('volTask.backToTasks')}
           </Button>
         ) : (
           <Button
@@ -147,7 +149,7 @@ export default function VolTask() {
               setProofSheet(true);
             }}
           >
-            {NEXT_LABEL[t.current]}
+            {NEXT_LABEL_KEY[t.current] ? tr(NEXT_LABEL_KEY[t.current]) : tr('common.continue')}
           </Button>
         )
       }
@@ -160,7 +162,7 @@ export default function VolTask() {
           <View style={styles.metaItem}>
             <Icon name="navigation" size={14} color={colors.textSecondary} />
             <Text variant="sm" weight={600} color={colors.textSecondary}>
-              {t.distance} km
+              {tr('volTask.kmAway', { distance: t.distance })}
             </Text>
           </View>
           <View style={styles.metaItem}>
@@ -172,7 +174,7 @@ export default function VolTask() {
         </View>
       </View>
 
-      <SectionHeader title="Pickup — donor" />
+      <SectionHeader title={tr('volTask.pickupDonor')} />
       <ContactRow
         name={donorName}
         sub={pickupAddr}
@@ -181,28 +183,33 @@ export default function VolTask() {
         onMessage={() => openChat(donorName, donorPhone)}
       />
 
-      <SectionHeader title="Drop-off — recipient location" />
+      <SectionHeader title={tr('volTask.dropoffRecipient')} />
       <LocationRow
         name={dropName}
-        sub="Community shelter · serves 40"
+        sub={tr('volTask.communityShelterServes', { count: 40 })}
         address={dropAddr}
         onDirections={() => openDirections('48 Hill Road, Bandra West, Mumbai')}
       />
 
       <TeamSection
-        title="Task team"
+        title={tr('volTask.taskTeam')}
         members={t.team ?? []}
         candidates={[...s.team, ...s.suggestions]
           .filter((v) => v.name !== s.profiles.volunteer.name)
-          .map((v) => ({ id: v.id, name: v.name, contact: v.contact, hint: `${v.trips} trips` }))}
+          .map((v) => ({
+            id: v.id,
+            name: v.name,
+            contact: v.contact,
+            hint: tr('volTask.tripsCount', { count: v.trips }),
+          }))}
         onAdd={(c) =>
           s.addTaskTeammate(t.id, { id: c.id, name: c.name, contact: c.contact, addedBy: 'volunteer' })
         }
         onRemove={(id) => s.removeTaskTeammate(t.id, id)}
-        addLabel="Add a teammate"
+        addLabel={tr('volTask.addTeammate')}
       />
 
-      <SectionHeader title="Track on map" />
+      <SectionHeader title={tr('volTask.trackOnMap')} />
       <TrackPanel
         pickup={{ name: donorName }}
         dropoff={{ name: dropName }}
@@ -223,27 +230,30 @@ export default function VolTask() {
         }
       />
 
-      <SectionHeader title="Update status" />
+      <SectionHeader title={tr('volTask.updateStatus')} />
       <View style={styles.timelineCard}>
         <Timeline
           current={t.current as 'accepted' | 'picked_up' | 'delivered' | 'completed'}
           steps={[
-            { key: 'accepted', label: 'Accepted', time: stamp('accepted') },
-            { key: 'picked_up', label: 'Picked up from donor', time: stamp('picked_up') },
-            { key: 'delivered', label: 'Delivered to recipient', time: stamp('delivered') },
-            { key: 'completed', label: 'Completed', time: stamp('completed') },
+            { key: 'accepted', label: tr('status.accepted'), time: stamp('accepted') },
+            { key: 'picked_up', label: tr('volTask.timelinePickedUp'), time: stamp('picked_up') },
+            { key: 'delivered', label: tr('volTask.timelineDelivered'), time: stamp('delivered') },
+            { key: 'completed', label: tr('status.completed'), time: stamp('completed') },
           ]}
         />
       </View>
 
       {proofKeys.length > 0 && (
         <>
-          <SectionHeader title="Progress photos" />
+          <SectionHeader title={tr('volTask.progressPhotos')} />
           <ProgressPhotos proofs={taskProofs} />
         </>
       )}
 
-      <SectionHeader title="Transport" action={t.transport ? undefined : 'Optional'} />
+      <SectionHeader
+        title={tr('volTask.transport')}
+        action={t.transport ? undefined : tr('common.optional')}
+      />
       {t.transport ? (
         <View style={styles.transportCard}>
           <View style={[styles.transportIcon, { backgroundColor: colors.brandSoft }]}>
@@ -257,15 +267,15 @@ export default function VolTask() {
             <Text size={12} mono color={colors.textMuted}>
               {t.transport.plate} ·{' '}
               {t.transport.pricing === 'paid'
-                ? t.transport.fare || 'Paid'
+                ? t.transport.fare || tr('volTask.paid')
                 : t.transport.pricing === 'free'
-                  ? 'Free'
-                  : 'requested'}
+                  ? tr('volTask.free')
+                  : tr('volTask.requested')}
             </Text>
           </View>
           <Pressable onPress={cancelTransport} accessibilityRole="button" style={styles.cancelBtn}>
             <Text size={13} weight={700} color={colors.textSecondary}>
-              Cancel
+              {tr('common.cancel')}
             </Text>
           </Pressable>
         </View>
@@ -273,7 +283,9 @@ export default function VolTask() {
         <View style={{ gap: 10 }}>
           {jobOffers.length > 0 && (
             <Text variant="caption" weight={700} color={colors.brandStrong}>
-              {jobOffers.length} transport {jobOffers.length === 1 ? 'provider has' : 'providers have'} offered a ride
+              {jobOffers.length === 1
+                ? tr('volTask.offersOne')
+                : tr('volTask.offersMany', { count: jobOffers.length })}
             </Text>
           )}
           {jobOffers.map((o) => (
@@ -291,7 +303,7 @@ export default function VolTask() {
               </View>
               <View style={{ alignItems: 'flex-end', gap: 6 }}>
                 <StatusBadge tone={o.pricing === 'free' ? 'success' : 'food'} dot={false} size="sm">
-                  {o.pricing === 'free' ? 'Free' : o.fare || 'Paid'}
+                  {o.pricing === 'free' ? tr('volTask.free') : o.fare || tr('volTask.paid')}
                 </StatusBadge>
                 <Pressable
                   onPress={() => s.acceptTransportOffer(o)}
@@ -299,7 +311,7 @@ export default function VolTask() {
                   style={styles.acceptOfferBtn}
                 >
                   <Text size={13} weight={700} color="#fff">
-                    Accept
+                    {tr('volTask.accept')}
                   </Text>
                 </Pressable>
               </View>
@@ -315,10 +327,10 @@ export default function VolTask() {
             </View>
             <View style={{ flex: 1 }}>
               <Text size={15} weight={700} color={colors.textPrimary}>
-                Request from fleet
+                {tr('volTask.requestFromFleet')}
               </Text>
               <Text size={12} color={colors.textMuted}>
-                Optional — for bulky or far deliveries
+                {tr('volTask.requestFromFleetHint')}
               </Text>
             </View>
             <Icon name="plus" size={20} color={colors.brandStrong} />
@@ -328,7 +340,7 @@ export default function VolTask() {
 
       <BottomSheet
         open={transportSheet}
-        title="Request transport"
+        title={tr('volTask.requestTransport')}
         onClose={() => setTransportSheet(false)}
       >
         <Text
@@ -336,14 +348,13 @@ export default function VolTask() {
           color={colors.textSecondary}
           style={{ marginBottom: space[3] + 2, lineHeight: 14 * leading.normal }}
         >
-          Pick an available vehicle to help carry this donation. This is optional — you can deliver on
-          your own.
+          {tr('volTask.requestTransportBody')}
         </Text>
         <View style={{ gap: 10 }}>
           {fleet.length === 0 ? (
             <View style={styles.emptyBox}>
               <Text variant="sm" color={colors.textMuted} align="center">
-                No vehicles available right now.
+                {tr('volTask.noVehicles')}
               </Text>
             </View>
           ) : (
@@ -367,7 +378,7 @@ export default function VolTask() {
                 </View>
                 {v.pricing && (
                   <StatusBadge tone={v.pricing === 'free' ? 'success' : 'food'} dot={false} size="sm">
-                    {v.pricing === 'free' ? 'Free' : v.fare || 'Paid'}
+                    {v.pricing === 'free' ? tr('volTask.free') : v.fare || tr('volTask.paid')}
                   </StatusBadge>
                 )}
                 <Icon name="chevron-right" size={18} color={colors.textMuted} />
@@ -379,11 +390,13 @@ export default function VolTask() {
 
       <BottomSheet
         open={proofSheet}
-        title={`Photo proof — ${PROOF_WORD[n] || ''}`}
+        title={tr('volTask.photoProofTitle', {
+          word: PROOF_WORD_KEY[n] ? tr(PROOF_WORD_KEY[n]) : '',
+        })}
         onClose={() => setProofSheet(false)}
         footer={
           <Button fullWidth size="lg" disabled={!photo} onPress={confirmUpdate}>
-            {photo ? 'Confirm update' : 'Add a photo to continue'}
+            {photo ? tr('volTask.confirmUpdate') : tr('volTask.addPhotoToContinue')}
           </Button>
         }
       >
@@ -392,20 +405,22 @@ export default function VolTask() {
           color={colors.textSecondary}
           style={{ marginBottom: space[3] + 2, lineHeight: 14 * leading.normal }}
         >
-          A photo is required so the donor and admin can verify the {PROOF_WORD[n]}.
+          {tr('volTask.photoRequired', {
+            word: PROOF_WORD_KEY[n] ? tr(PROOF_WORD_KEY[n]) : '',
+          })}
         </Text>
         <PhotoPicker
           value={photo ?? undefined}
           onPick={setPhoto}
           size={160}
-          label="Take / choose photo"
+          label={tr('volTask.takeChoosePhoto')}
           accent={colors.brand}
         />
       </BottomSheet>
 
       <BottomSheet
         open={!!reward}
-        title="Delivery complete 🎉"
+        title={tr('volTask.deliveryComplete')}
         onClose={() => setReward(null)}
         footer={
           <Button
@@ -416,7 +431,7 @@ export default function VolTask() {
               back();
             }}
           >
-            Done
+            {tr('common.done')}
           </Button>
         }
       >
@@ -427,6 +442,7 @@ export default function VolTask() {
 }
 
 function RewardCelebration({ reward }: { reward: DeliveryReward }) {
+  const tr = useT();
   const pop = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     pop.setValue(0);
@@ -444,7 +460,7 @@ function RewardCelebration({ reward }: { reward: DeliveryReward }) {
           +{reward.total}
         </Text>
         <Text size={13} weight={700} color={colors.textSecondary}>
-          points earned
+          {tr('volTask.pointsEarned')}
         </Text>
       </Animated.View>
 
@@ -454,7 +470,7 @@ function RewardCelebration({ reward }: { reward: DeliveryReward }) {
             <View key={b.id} style={styles.celebrateBadge}>
               <Icon name={b.icon} size={18} color={palette.gold600} />
               <Text size={13} weight={700} color={colors.textPrimary}>
-                {b.name} unlocked
+                {tr('volTask.badgeUnlocked', { name: tr(`rewards.badge.${b.id}.name`) })}
               </Text>
             </View>
           ))}
@@ -478,7 +494,10 @@ function RewardCelebration({ reward }: { reward: DeliveryReward }) {
         {reward.multiplierBonus > 0 && (
           <View style={[styles.celebrateRow, styles.celebrateDivider]}>
             <Text size={13} weight={700} color={palette.orange600} style={{ flex: 1 }}>
-              🔥 {reward.weeklyStreak}-week streak · ×{reward.multiplier}
+              {tr('volTask.streakBonus', {
+                weeks: reward.weeklyStreak,
+                multiplier: reward.multiplier,
+              })}
             </Text>
             <Text size={13} weight={800} color={palette.orange600}>
               +{reward.multiplierBonus}
@@ -488,7 +507,7 @@ function RewardCelebration({ reward }: { reward: DeliveryReward }) {
         {reward.milestoneBonus > 0 && (
           <View style={styles.celebrateRow}>
             <Text size={13} weight={700} color={colors.brandStrong} style={{ flex: 1 }}>
-              🎯 {reward.milestoneLabel} bonus
+              {tr('volTask.milestoneBonus', { label: reward.milestoneLabel ?? '' })}
             </Text>
             <Text size={13} weight={800} color={colors.brandStrong}>
               +{reward.milestoneBonus}
@@ -499,7 +518,7 @@ function RewardCelebration({ reward }: { reward: DeliveryReward }) {
 
       {!reward.streakQualified && (
         <Text size={12} color={colors.textMuted} align="center">
-          One more delivery this week unlocks the ×1.5 streak bonus.
+          {tr('volTask.streakHint')}
         </Text>
       )}
     </View>
@@ -519,6 +538,7 @@ function ContactRow({
   phone?: string;
   onMessage: () => void;
 }) {
+  const tr = useT();
   return (
     <View style={styles.contactRow}>
       <Avatar name={name} accent={accent} />
@@ -533,7 +553,7 @@ function ContactRow({
       <Pressable
         onPress={onMessage}
         accessibilityRole="button"
-        accessibilityLabel={`Message ${name}`}
+        accessibilityLabel={tr('volTask.messageName', { name })}
         style={styles.msgBtn}
       >
         <Icon name="message-circle" size={18} color={colors.textPrimary} />
@@ -541,7 +561,7 @@ function ContactRow({
       <Pressable
         onPress={() => callNumber(phone)}
         accessibilityRole="button"
-        accessibilityLabel={`Call ${name}`}
+        accessibilityLabel={tr('volTask.callName', { name })}
         style={styles.callBtn}
       >
         <Icon name="phone" size={18} color="#fff" />
@@ -561,6 +581,7 @@ function LocationRow({
   address: string;
   onDirections: () => void;
 }) {
+  const tr = useT();
   return (
     <View style={styles.locationCard}>
       <View style={{ flexDirection: 'row', gap: space[3], alignItems: 'center' }}>
@@ -585,12 +606,12 @@ function LocationRow({
       <Pressable
         onPress={onDirections}
         accessibilityRole="button"
-        accessibilityLabel="Get directions"
+        accessibilityLabel={tr('volTask.getDirections')}
         style={styles.directionsBtn}
       >
         <Icon name="navigation" size={16} color="#fff" />
         <Text variant="body" weight={700} color="#fff">
-          Get directions
+          {tr('volTask.getDirections')}
         </Text>
       </Pressable>
     </View>

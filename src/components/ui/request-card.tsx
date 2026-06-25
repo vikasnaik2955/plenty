@@ -4,6 +4,7 @@
  */
 import { type StyleProp, View, type ViewStyle } from 'react-native';
 
+import { useT } from '@/i18n/use-t';
 import { colors, fontSize, radius, shadows } from '@/theme';
 
 import { Icon } from './icon';
@@ -24,7 +25,7 @@ export interface RequestCardProps {
   time?: string;
   onAccept?: () => void;
   onDecline?: () => void;
-  /** Primary button label. @default "Accept" */
+  /** Primary button label. Defaults to the translated "Accept". */
   acceptLabel?: string;
   style?: StyleProp<ViewStyle>;
 }
@@ -49,9 +50,10 @@ export function RequestCard({
   time,
   onAccept,
   onDecline,
-  acceptLabel = 'Accept',
+  acceptLabel,
   style,
 }: RequestCardProps) {
+  const t = useT();
   const isFood = category === 'food';
   const accent = isFood ? colors.food : colors.clothes;
   const soft = isFood ? colors.foodSoft : colors.clothesSoft;
@@ -89,19 +91,19 @@ export function RequestCard({
           </Text>
           {donor && (
             <Text size={fontSize.caption} color={colors.textMuted} style={{ marginTop: 1 }}>
-              from {donor}
+              {t('requestCard.from', { donor })}
             </Text>
           )}
         </View>
         <StatusBadge tone={isFood ? 'food' : 'clothes'} dot={false} size="sm">
-          {isFood ? 'Food' : 'Clothes'}
+          {isFood ? t('requestCard.food') : t('requestCard.clothes')}
         </StatusBadge>
       </View>
       <View
         style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 16, rowGap: 6, marginTop: 12, marginBottom: 14 }}
       >
-        {people != null && <Meta icon="users" label={`Serves ${people}`} />}
-        {distance != null && <Meta icon="navigation" label={`${distance} km away`} />}
+        {people != null && <Meta icon="users" label={t('requestCard.serves', { count: people })} />}
+        {distance != null && <Meta icon="navigation" label={t('requestCard.kmAway', { distance })} />}
         {time && <Meta icon="clock" label={time} />}
       </View>
       <View style={{ flexDirection: 'row', gap: 10 }}>
@@ -120,7 +122,7 @@ export function RequestCard({
           }}
         >
           <Text variant="body" weight={700} color={colors.textSecondary}>
-            Decline
+            {t('requestCard.decline')}
           </Text>
         </PressableScale>
         <PressableScale
@@ -141,7 +143,7 @@ export function RequestCard({
           ]}
         >
           <Text variant="body" weight={700} color="#fff">
-            {acceptLabel}
+            {acceptLabel ?? t('requestCard.accept')}
           </Text>
         </PressableScale>
       </View>

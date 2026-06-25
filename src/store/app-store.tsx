@@ -22,7 +22,7 @@ import {
 
 import { repository } from '@/data/repository';
 import { INITIAL_PROFILES, MOCK_DATA } from '@/data/mock';
-import { STATUS_LABEL } from '@/theme';
+import { localeFor, translate } from '@/i18n/translations';
 import { threadId, type ThreadReads, type Threads } from '@/utils/chat';
 import { monthKey, weekKey } from '@/utils/datetime';
 import {
@@ -30,6 +30,7 @@ import {
   computeDeliveryReward,
   earnedBadgeIds,
   POINTS,
+  VOL_TIERS,
   type DeliveryReward,
   type Perk,
   type ScoredTask,
@@ -781,6 +782,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     toastTimer.current = setTimeout(() => setToast(null), 2600);
   }, []);
 
+  // Translate a toast/notification at fire-time using the current language.
+  const tr = useCallback(
+    (key: string, params?: Record<string, string | number>) =>
+      translate(localeFor(stateRef.current.language), key, params),
+    [],
+  );
+
   // Raise a role-targeted notification about the ongoing task.
   const pushNotification = useCallback(
     (type: NotificationType, title: string, message: string, audience: Role[]) => {
@@ -802,14 +810,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
         type: 'ADD_ADDRESS',
         address: { id: `addr-${idSeq.current++}`, label: input.label.trim(), address: input.address.trim() },
       });
-      showToast('Address saved', 'success');
+      showToast(tr('toast.addressSaved'), 'success');
     },
     [showToast],
   );
   const updateAddress = useCallback(
     (id: string, patch: Partial<SavedAddress>) => {
       dispatch({ type: 'UPDATE_ADDRESS', id, patch });
-      showToast('Address updated', 'success');
+      showToast(tr('toast.addressUpdated'), 'success');
     },
     [showToast],
   );
@@ -854,13 +862,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       cancelTimer.current = setTimeout(
         () => {
           if (stateRef.current.allocation?.current !== 'requested') return;
-          dispatch({ type: 'CANCEL_ALLOCATION', reason: AUTO_CANCEL_REASON, at: Date.now() });
-          pushNotification('status', 'Request auto-cancelled', AUTO_CANCEL_REASON, ['donor']);
+          dispatch({ type: 'CANCEL_ALLOCATION', reason: tr('notif.autoCancel.msg'), at: Date.now() });
+          pushNotification('status', tr('notif.autoCancel.title'), tr('notif.autoCancel.msg'), ['donor']);
         },
         Math.max(0, expiresAt - Date.now()),
       );
     },
-    [pushNotification],
+    [pushNotification, tr],
   );
 
   // Donor confirms sending a donation to a chosen recipient.
@@ -908,20 +916,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
           drop: consumer.name,
         };
         dispatch({ type: 'ADD_OPEN_REQUEST', request });
-        showToast('Request sent to nearby volunteers', 'success');
+        showToast(tr('toast.requestSent'), 'success');
         pushNotification(
           'request',
-          'New donation to deliver',
-          `${title} for ${consumer.name} — pickup needed.`,
+          tr('notif.newDonation.title'),
+          tr('notif.newDonation.msg', { title, consumer: consumer.name }),
           ['volunteer', 'transport'],
         );
         // Auto-cancel only if no real volunteer accepts within the window.
         armWait(expiresAt);
       } else {
-        showToast('Recipient notified — arrange handover directly', 'success');
+        showToast(tr('toast.recipientNotified'), 'success');
       }
     },
-    [state.draft, showToast, pushNotification, armWait],
+    [state.draft, showToast, pushNotification, armWait, tr],
   );
 
   // Donor retries a request that was auto-cancelled (no volunteer in time).
@@ -948,15 +956,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
         drop: a.consumer,
       },
     });
-    showToast('Re-sent to nearby volunteers', 'info');
+    showToast(tr('toast.reSent'), 'info');
     pushNotification(
       'request',
-      'Donation re-sent',
-      `${a.title} for ${a.consumer} — pickup needed.`,
+      tr('notif.donationReSent.title'),
+      tr('notif.donationReSent.msg', { title: a.title, consumer: a.consumer }),
       ['volunteer', 'transport'],
     );
     armWait(expiresAt);
-  }, [armWait, showToast, pushNotification]);
+  }, [armWait, showToast, pushNotification, tr]);
 
   // Donor withdraws the request themselves (clears the pending allocation + its
   // broadcast so volunteers no longer see it).
@@ -972,35 +980,42 @@ export function AppProvider({ children }: { children: ReactNode }) {
       // A real volunteer accepted, so the donor's auto-cancel must not fire.
       if (cancelTimer.current) clearTimeout(cancelTimer.current);
       dispatch({ type: 'ACCEPT_REQUEST', requestId, at: Date.now() });
-      showToast('Accepted — added to your active tasks', 'success');
+      showToast(tr('toast.requestAccepted'), 'success');
       const req = stateRef.current.data.OPEN_REQUESTS.find((r) => r.id === requestId);
       const who = stateRef.current.profiles.volunteer.name;
       pushNotification(
         'accepted',
-        'Volunteer on the way',
-        `${who} accepted ${req?.title ?? 'a delivery'} and is heading to pickup.`,
+        tr('notif.volunteerOnWay.title'),
+        tr('notif.volunteerOnWay.msg', { who, title: req?.title ?? tr('notif.aDelivery') }),
         ['donor', 'transport'],
       );
     },
-    [showToast, pushNotification],
+    [showToast, pushNotification, tr],
   );
   const setVolTask = useCallback((id: string | null) => dispatch({ type: 'SET_VOL_TASK', id }), []);
   const declineRequest = useCallback((id: string) => dispatch({ type: 'DECLINE_REQUEST', id }), []);
   const notifyTaskStatus = useCallback(
     (id: string, status: Status) => {
       const task = stateRef.current.volActive.find((t) => t.id === id);
-      const title = task?.title ?? 'Your donation';
-      const label = STATUS_LABEL[status] ?? status;
+      const title = task?.title ?? tr('notif.yourDonation');
+      const label = tr(`status.${status}`);
       if (status === 'completed') {
-        pushNotification('delivered', 'Delivered', `${title} was delivered and completed. 🎉`, [
-          'donor',
-          'transport',
-        ]);
+        pushNotification(
+          'delivered',
+          tr('status.delivered'),
+          tr('notif.taskCompleted.msg', { title }),
+          ['donor', 'transport'],
+        );
       } else {
-        pushNotification('status', label, `${title} is now ${label.toLowerCase()}.`, ['donor', 'transport']);
+        pushNotification(
+          'status',
+          label,
+          tr('notif.taskStatus.msg', { title, status: label.toLowerCase() }),
+          ['donor', 'transport'],
+        );
       }
     },
-    [pushNotification],
+    [pushNotification, tr],
   );
   const updateVolTask = useCallback(
     (id: string, patch: Partial<VolunteerTask>) => {
@@ -1028,15 +1043,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
       dispatch({ type: 'SET_VOL_REWARDS', rewards: next });
       pushNotification(
         'reward',
-        `+${reward.total} points earned`,
+        tr('notif.pointsEarned.title', { points: reward.total }),
         reward.newBadges.length
-          ? `${task.title ?? 'Delivery'} completed · new badge: ${reward.newBadges[0].name} 🎉`
-          : `${task.title ?? 'Delivery'} completed. Keep your streak going!`,
+          ? tr('notif.deliveryRewardBadge.msg', {
+              title: task.title ?? tr('notif.delivery'),
+              badge: reward.newBadges[0].name,
+            })
+          : tr('notif.deliveryReward.msg', { title: task.title ?? tr('notif.delivery') }),
         ['volunteer'],
       );
       return reward;
     },
-    [pushNotification],
+    [pushNotification, tr],
   );
 
   // Redeem a perk from the rewards store (spends the balance, not lifetime points).
@@ -1046,29 +1064,32 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const prev = stateRef.current.volRewards;
       const res = applyRedeem(prev, perk, prev.lifetimePoints, now);
       if (!res.ok || !res.next) {
-        showToast(res.reason ?? 'Cannot redeem yet', 'error');
+        // res.reason is an i18n key (see applyRedeem); translate at fire-time.
+        // The tier-blocked case interpolates the TRANSLATED tier name as {tier}.
+        const tierName = tr(`rewards.tier.${VOL_TIERS[perk.minTierIndex].id}`);
+        showToast(res.reason ? tr(res.reason, { tier: tierName }) : tr('toast.cannotRedeem'), 'error');
         return false;
       }
       dispatch({ type: 'SET_VOL_REWARDS', rewards: res.next });
-      showToast(`Redeemed ${perk.name} 🎁`, 'success');
+      showToast(tr('toast.perkRedeemed', { name: tr(`rewards.perk.${perk.id}.name`) }), 'success');
       return true;
     },
-    [showToast],
+    [showToast, tr],
   );
 
   const addToTeam = useCallback(
     (v: Volunteer) => {
       dispatch({ type: 'ADD_TO_TEAM', volunteer: v });
-      showToast(`${v.name} added to your team`, 'success');
+      showToast(tr('toast.addedToTeam', { name: v.name }), 'success');
     },
-    [showToast],
+    [showToast, tr],
   );
   const addMember = useCallback(
     (v: Volunteer) => {
       dispatch({ type: 'ADD_MEMBER', volunteer: v });
-      showToast(`Invite sent to ${v.name}`, 'success');
+      showToast(tr('toast.inviteSent', { name: v.name }), 'success');
     },
-    [showToast],
+    [showToast, tr],
   );
 
   const addConsumer = useCallback(
@@ -1103,13 +1124,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
         };
         nextR.badges = Array.from(new Set([...prev.badges, ...earnedBadgeIds(nextR)]));
         dispatch({ type: 'SET_VOL_REWARDS', rewards: nextR });
-        showToast(`${consumer.name} added · +${POINTS.shelter} points`, 'success');
+        showToast(tr('toast.shelterAddedPoints', { name: consumer.name, points: POINTS.shelter }), 'success');
       } else {
-        showToast(`${consumer.name} added to recipients`, 'success');
+        showToast(tr('toast.shelterAdded', { name: consumer.name }), 'success');
       }
       return consumer;
     },
-    [showToast],
+    [showToast, tr],
   );
 
   const markNeedUpdated = useCallback(() => dispatch({ type: 'SET_NEED_UPDATED', at: Date.now() }), []);
@@ -1117,16 +1138,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const updateDonation = useCallback(
     (id: string, patch: Partial<Donation>) => {
       dispatch({ type: 'UPDATE_DONATION', id, patch });
-      showToast('Donation updated', 'success');
+      showToast(tr('toast.donationUpdated'), 'success');
       const title = patch.title ?? stateRef.current.data.DONATIONS.find((d) => d.id === id)?.title;
       pushNotification(
         'status',
-        'Donation updated',
-        `The donor updated ${title ?? 'a donation'} — please review the new details.`,
+        tr('notif.donationUpdated.title'),
+        tr('notif.donationUpdated.msg', { title: title ?? tr('notif.aDonation') }),
         ['volunteer', 'transport'],
       );
     },
-    [showToast, pushNotification],
+    [showToast, pushNotification, tr],
   );
 
   const sendMessage = useCallback((from: string, to: string, text: string) => {
@@ -1164,9 +1185,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const addVehicle = useCallback(
     (v: Omit<TransportVehicle, 'id'>) => {
       dispatch({ type: 'ADD_VEHICLE', vehicle: { ...v, id: `tv-${idSeq.current++}` } });
-      showToast('Vehicle added', 'success');
+      showToast(tr('toast.vehicleAdded'), 'success');
     },
-    [showToast],
+    [showToast, tr],
   );
   const updateVehicle = useCallback(
     (id: string, patch: Partial<TransportVehicle>) => dispatch({ type: 'UPDATE_VEHICLE', id, patch }),
@@ -1175,27 +1196,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const removeVehicle = useCallback(
     (id: string) => {
       dispatch({ type: 'REMOVE_VEHICLE', id });
-      showToast('Vehicle removed');
+      showToast(tr('toast.vehicleRemoved'));
     },
-    [showToast],
+    [showToast, tr],
   );
   const submitVerification = useCallback(
     (patch: Partial<TransportVerification>) => {
       dispatch({ type: 'SUBMIT_VERIFICATION', patch });
-      showToast('Submitted for verification', 'success');
+      showToast(tr('toast.verificationSubmitted'), 'success');
       // Simulate review + approval (no backend).
       if (verifyTimer.current) clearTimeout(verifyTimer.current);
       verifyTimer.current = setTimeout(() => {
         dispatch({ type: 'SET_VERIFICATION_STATUS', status: 'verified' });
         pushNotification(
           'accepted',
-          "You're verified",
-          'Your transport account is verified — you can now offer rides.',
+          tr('notif.verified.title'),
+          tr('notif.verified.msg'),
           ['transport'],
         );
       }, 2800);
     },
-    [showToast, pushNotification],
+    [showToast, pushNotification, tr],
   );
 
   const offerTransport = useCallback(
@@ -1217,16 +1238,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
         accepted: false,
       };
       dispatch({ type: 'OFFER_TRANSPORT', offer });
-      showToast('Ride offered — volunteers can now pick you', 'success');
+      showToast(tr('toast.rideOffered'), 'success');
       const job = st.data.OPEN_REQUESTS.find((r) => r.id === jobId);
+      const price = vehicle.pricing === 'free' ? tr('notif.priceFree') : vehicle.fare || tr('notif.pricePaid');
       pushNotification(
         'request',
-        'Transport offered a ride',
-        `${provider} (${vehicle.type}, ${vehicle.pricing === 'free' ? 'free' : vehicle.fare || 'paid'}) for ${job?.title ?? 'a delivery'}.`,
+        tr('notif.transportOffered.title'),
+        tr('notif.transportOffered.msg', {
+          provider,
+          type: vehicle.type,
+          price,
+          title: job?.title ?? tr('notif.aDelivery'),
+        }),
         ['volunteer', 'donor'],
       );
     },
-    [showToast, pushNotification],
+    [showToast, pushNotification, tr],
   );
   const withdrawTransport = useCallback((jobId: string) => {
     dispatch({
@@ -1248,27 +1275,34 @@ export function AppProvider({ children }: { children: ReactNode }) {
         fare: offer.fare,
       };
       dispatch({ type: 'ACCEPT_TRANSPORT_OFFER', offerId: offer.id, volunteer, transport });
-      showToast(`${offer.provider} will handle transport`, 'success');
+      showToast(tr('toast.transportHandled', { provider: offer.provider }), 'success');
       pushNotification(
         'accepted',
-        'Transport confirmed',
-        `${volunteer} accepted ${offer.provider}'s ride (${offer.vehicleType}).`,
+        tr('notif.transportConfirmed.title'),
+        tr('notif.transportConfirmed.msg', {
+          volunteer,
+          provider: offer.provider,
+          type: offer.vehicleType,
+        }),
         ['transport', 'donor'],
       );
     },
-    [showToast, pushNotification],
+    [showToast, pushNotification, tr],
   );
 
   const assignAllocationVolunteer = useCallback(
     (helper: TaskHelper) => {
       dispatch({ type: 'ASSIGN_ALLOCATION_VOLUNTEER', helper });
-      showToast(`${helper.name} added to the delivery team`, 'success');
-      const item = stateRef.current.allocation?.title ?? 'a delivery';
-      pushNotification('request', 'Added to a delivery', `You were added to help with ${item}.`, [
-        'volunteer',
-      ]);
+      showToast(tr('toast.addedToDeliveryTeam', { name: helper.name }), 'success');
+      const item = stateRef.current.allocation?.title ?? tr('notif.aDelivery');
+      pushNotification(
+        'request',
+        tr('notif.addedToDelivery.title'),
+        tr('notif.addedToDelivery.msg', { item }),
+        ['volunteer'],
+      );
     },
-    [showToast, pushNotification],
+    [showToast, pushNotification, tr],
   );
   const removeAllocationVolunteer = useCallback(
     (helperId: string) => dispatch({ type: 'REMOVE_ALLOCATION_VOLUNTEER', helperId }),
@@ -1277,16 +1311,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const addTaskTeammate = useCallback(
     (taskId: string, helper: TaskHelper) => {
       dispatch({ type: 'ADD_TASK_TEAMMATE', taskId, helper });
-      showToast(`${helper.name} added to this task`, 'success');
+      showToast(tr('toast.addedToTask', { name: helper.name }), 'success');
       const task = stateRef.current.volActive.find((t) => t.id === taskId);
       pushNotification(
         'request',
-        'Teammate joined the delivery',
-        `${helper.name} is now helping with ${task?.title ?? 'a delivery'}.`,
+        tr('notif.teammateJoined.title'),
+        tr('notif.teammateJoined.msg', { name: helper.name, title: task?.title ?? tr('notif.aDelivery') }),
         ['donor'],
       );
     },
-    [showToast, pushNotification],
+    [showToast, pushNotification, tr],
   );
   const removeTaskTeammate = useCallback(
     (taskId: string, helperId: string) => dispatch({ type: 'REMOVE_TASK_TEAMMATE', taskId, helperId }),

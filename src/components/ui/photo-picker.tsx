@@ -8,6 +8,7 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { Alert, Pressable, type StyleProp, View, type ViewStyle } from 'react-native';
 
+import { useT } from '@/i18n/use-t';
 import { colors, radius } from '@/theme';
 
 import { Icon } from './icon';
@@ -22,7 +23,7 @@ export interface PhotoPickerProps {
   shape?: 'rect' | 'circle';
   /** Size in px (height; width for circle). @default 96 */
   size?: number;
-  /** @default "Add photo" */
+  /** Defaults to a localized "Add photo". */
   label?: string;
   /** Accent color when filled / for the placeholder icon. @default brand */
   accent?: string;
@@ -34,16 +35,18 @@ export function PhotoPicker({
   onPick,
   shape = 'rect',
   size = 96,
-  label = 'Add photo',
+  label,
   accent = colors.brand,
   style,
 }: PhotoPickerProps) {
+  const t = useT();
+  const resolvedLabel = label ?? t('photoPicker.addPhoto');
   const br = shape === 'circle' ? size / 2 : radius.md;
 
   const takePhoto = async () => {
     const perm = await ImagePicker.requestCameraPermissionsAsync();
     if (!perm.granted) {
-      Alert.alert('Camera access needed', 'Enable camera permission to take a photo.');
+      Alert.alert(t('photoPicker.cameraAccessTitle'), t('photoPicker.cameraAccessMessage'));
       return;
     }
     const result = await ImagePicker.launchCameraAsync({ mediaTypes: 'images', quality: 0.8 });
@@ -61,10 +64,10 @@ export function PhotoPicker({
 
   // Let the user take a fresh photo (evidence not in the gallery) or pick one.
   const choose = () => {
-    Alert.alert(label, undefined, [
-      { text: 'Take photo', onPress: takePhoto },
-      { text: 'Choose from gallery', onPress: pickFromGallery },
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(resolvedLabel, undefined, [
+      { text: t('photoPicker.takePhoto'), onPress: takePhoto },
+      { text: t('photoPicker.chooseFromGallery'), onPress: pickFromGallery },
+      { text: t('common.cancel'), style: 'cancel' },
     ]);
   };
 
@@ -72,7 +75,7 @@ export function PhotoPicker({
     <Pressable
       onPress={choose}
       accessibilityRole="button"
-      accessibilityLabel={label}
+      accessibilityLabel={resolvedLabel}
       style={[
         {
           width: shape === 'rect' ? '100%' : size,
@@ -113,7 +116,7 @@ export function PhotoPicker({
         <>
           <Icon name="image-plus" size={shape === 'circle' ? 22 : 24} color={accent} />
           <Text size={12} weight={700} color={colors.textMuted}>
-            {label}
+            {resolvedLabel}
           </Text>
         </>
       )}

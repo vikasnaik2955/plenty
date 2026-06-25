@@ -5,21 +5,13 @@
  */
 import { type StyleProp, View, type ViewStyle } from 'react-native';
 
+import { useT } from '@/i18n/use-t';
 import { colors, type DonationStatus, palette, radius, statusColors } from '@/theme';
 
 import { Text } from './text';
 
 export type LifecycleStatus = DonationStatus;
 export type BadgeTone = 'success' | 'warning' | 'error' | 'info' | 'food' | 'clothes' | 'neutral';
-
-const STATUS_LABEL: Record<DonationStatus, string> = {
-  requested: 'Requested',
-  accepted: 'Accepted',
-  picked_up: 'Picked up',
-  delivered: 'Delivered',
-  completed: 'Completed',
-  cancelled: 'Cancelled',
-};
 
 const TONES: Record<BadgeTone, { fg: string; bg: string }> = {
   success: { fg: palette.green700, bg: colors.successSoft },
@@ -46,8 +38,9 @@ export interface StatusBadgeProps {
 }
 
 export function StatusBadge({ status, tone, children, dot = true, size = 'md', style }: StatusBadgeProps) {
+  const t = useT();
   const conf = status ? statusColors[status] : TONES[tone ?? 'neutral'];
-  const label = children ?? (status ? STATUS_LABEL[status] : null);
+  const label = children ?? (status ? t(`status.${status}`) : null);
   const sm = size === 'sm';
 
   return (

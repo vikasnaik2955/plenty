@@ -22,6 +22,7 @@ import { AppBar } from '@/components/ui/app-bar';
 import { Avatar } from '@/components/ui/avatar';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
+import { useT } from '@/i18n/use-t';
 import { useApp } from '@/store/app-store';
 import { colors, radius, space } from '@/theme';
 import { callNumber } from '@/utils/contact';
@@ -29,15 +30,16 @@ import { threadId } from '@/utils/chat';
 import { dayKey, formatDayLabel, formatTime } from '@/utils/datetime';
 
 export default function ChatScreen() {
+  const t = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const s = useApp();
   const params = useLocalSearchParams<{ name?: string; phone?: string }>();
 
   const { markThreadRead, sendMessage, editMessage } = s;
-  const other = params.name || 'Contact';
+  const other = params.name || t('chat.contact');
   const phone = params.phone;
-  const me = s.role ? s.profiles[s.role].name : 'You';
+  const me = s.role ? s.profiles[s.role].name : t('chat.you');
   const tid = threadId(me, other);
   const messages = s.threads[tid] ?? [];
 
@@ -111,7 +113,7 @@ export default function ChatScreen() {
             <Pressable
               onPress={() => callNumber(phone)}
               accessibilityRole="button"
-              accessibilityLabel={`Call ${other}`}
+              accessibilityLabel={t('chat.callName', { name: other })}
               style={styles.callBtn}
             >
               <Icon name="phone" size={18} color="#fff" />
@@ -131,7 +133,7 @@ export default function ChatScreen() {
           {messages.length === 0 && (
             <View style={{ alignItems: 'center', paddingVertical: space[6] }}>
               <Text variant="sm" color={colors.textMuted} align="center">
-                Say hello to {other} 👋
+                {t('chat.sayHello', { name: other })}
               </Text>
             </View>
           )}
@@ -154,7 +156,7 @@ export default function ChatScreen() {
                   <Pressable
                     onLongPress={mine ? () => startEdit(m.id, m.text) : undefined}
                     delayLongPress={250}
-                    accessibilityLabel={mine ? 'Edit message' : undefined}
+                    accessibilityLabel={mine ? t('chat.editMessage') : undefined}
                     style={[styles.bubble, mine ? styles.mine : styles.theirs]}
                   >
                     <Text variant="body" color={mine ? '#fff' : colors.textPrimary}>
@@ -163,7 +165,7 @@ export default function ChatScreen() {
                     <View style={styles.metaRow}>
                       {m.edited && (
                         <Text size={10} color={mine ? 'rgba(255,255,255,0.75)' : colors.textMuted}>
-                          edited ·{' '}
+                          {t('chat.edited')} ·{' '}
                         </Text>
                       )}
                       <Text size={10} color={mine ? 'rgba(255,255,255,0.75)' : colors.textMuted}>
@@ -181,9 +183,9 @@ export default function ChatScreen() {
           <View style={styles.editBanner}>
             <Icon name="pencil" size={15} color={colors.brandStrong} />
             <Text size={13} weight={700} color={colors.brandStrong} style={{ flex: 1 }}>
-              Editing message
+              {t('chat.editingMessage')}
             </Text>
-            <Pressable onPress={cancelEdit} accessibilityRole="button" accessibilityLabel="Cancel edit" hitSlop={8}>
+            <Pressable onPress={cancelEdit} accessibilityRole="button" accessibilityLabel={t('chat.cancelEdit')} hitSlop={8}>
               <Icon name="x" size={16} color={colors.textSecondary} />
             </Pressable>
           </View>
@@ -192,7 +194,7 @@ export default function ChatScreen() {
           <TextInput
             value={text}
             onChangeText={setText}
-            placeholder={editingId ? 'Edit message…' : `Message ${other}…`}
+            placeholder={editingId ? t('chat.editPlaceholder') : t('chat.messagePlaceholder', { name: other })}
             placeholderTextColor={colors.textMuted}
             style={styles.input}
             multiline
@@ -201,7 +203,7 @@ export default function ChatScreen() {
             onPress={send}
             disabled={!text.trim()}
             accessibilityRole="button"
-            accessibilityLabel={editingId ? 'Save edit' : 'Send message'}
+            accessibilityLabel={editingId ? t('chat.saveEdit') : t('chat.sendMessage')}
             style={[styles.sendBtn, { opacity: text.trim() ? 1 : 0.5 }]}
           >
             <Icon name={editingId ? 'check' : 'send'} size={18} color="#fff" />

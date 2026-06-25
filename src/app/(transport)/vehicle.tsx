@@ -18,12 +18,21 @@ import { Select } from '@/components/ui/select';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
+import { useT } from '@/i18n/use-t';
 import { useApp } from '@/store/app-store';
 import { colors, fontSize, radius, shadows, space } from '@/theme';
 import type { Pricing, TransportVehicle } from '@/data/types';
 
-const VEHICLE_TYPES = ['Two-wheeler', 'Auto rickshaw', 'Cargo van', 'Car'].map((v) => ({ value: v, label: v }));
+const VEHICLE_TYPE_VALUES = ['Two-wheeler', 'Auto rickshaw', 'Cargo van', 'Car'];
 const vIcon = (t: string) => (t === 'Cargo van' ? 'truck' : t === 'Two-wheeler' ? 'bike' : t === 'Car' ? 'car' : 'caravan');
+const typeKey = (v: string) =>
+  v === 'Two-wheeler'
+    ? 'transportVehicle.typeTwoWheeler'
+    : v === 'Auto rickshaw'
+      ? 'transportVehicle.typeAutoRickshaw'
+      : v === 'Cargo van'
+        ? 'transportVehicle.typeCargoVan'
+        : 'transportVehicle.typeCar';
 
 interface Form {
   type: string;
@@ -36,8 +45,11 @@ const EMPTY: Form = { type: 'Two-wheeler', plate: '', pricing: 'free', fare: '',
 
 export default function TransportVehicles() {
   const s = useApp();
+  const t = useT();
   const [editing, setEditing] = useState<TransportVehicle | 'new' | null>(null);
   const [form, setForm] = useState<Form>(EMPTY);
+
+  const vehicleTypeOptions = VEHICLE_TYPE_VALUES.map((v) => ({ value: v, label: t(typeKey(v)) }));
 
   const openNew = () => {
     setForm(EMPTY);
@@ -64,10 +76,10 @@ export default function TransportVehicles() {
   return (
     <Page
       nav={<RoleBottomNav role="transport" active="vehicle" />}
-      header={<AppBar title="My vehicles" align="center" />}
+      header={<AppBar title={t('transportVehicle.title')} align="center" />}
       footer={
         <Button fullWidth size="lg" leftIcon="plus" onPress={openNew}>
-          Add vehicle
+          {t('transportVehicle.addVehicle')}
         </Button>
       }
     >
@@ -80,10 +92,10 @@ export default function TransportVehicles() {
             <View style={{ flex: 1, minWidth: 0 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <Text size={15} weight={700} numberOfLines={1} style={{ flexShrink: 1 }}>
-                  {v.type}
+                  {t(typeKey(v.type))}
                 </Text>
                 <StatusBadge tone={v.pricing === 'free' ? 'success' : 'food'} dot={false} size="sm">
-                  {v.pricing === 'free' ? 'Free' : v.fare || 'Paid'}
+                  {v.pricing === 'free' ? t('transportVehicle.free') : v.fare || t('transportVehicle.paid')}
                 </StatusBadge>
               </View>
               <Text size={12} mono color={colors.textMuted} style={{ marginTop: 2 }}>
@@ -93,10 +105,10 @@ export default function TransportVehicles() {
             <View style={{ alignItems: 'flex-end', gap: 6 }}>
               <Switch checked={v.available} onChange={(on) => s.updateVehicle(v.id, { available: on })} />
               <View style={{ flexDirection: 'row', gap: 6 }}>
-                <Pressable onPress={() => openEdit(v)} accessibilityLabel="Edit vehicle" accessibilityRole="button" style={styles.smallBtn}>
+                <Pressable onPress={() => openEdit(v)} accessibilityLabel={t('transportVehicle.editVehicle')} accessibilityRole="button" style={styles.smallBtn}>
                   <Icon name="pencil" size={15} color={colors.textSecondary} />
                 </Pressable>
-                <Pressable onPress={() => s.removeVehicle(v.id)} accessibilityLabel="Delete vehicle" accessibilityRole="button" style={styles.smallBtn}>
+                <Pressable onPress={() => s.removeVehicle(v.id)} accessibilityLabel={t('transportVehicle.deleteVehicle')} accessibilityRole="button" style={styles.smallBtn}>
                   <Icon name="trash-2" size={15} color={colors.error} />
                 </Pressable>
               </View>
@@ -105,38 +117,38 @@ export default function TransportVehicles() {
         ))}
         {s.transportVehicles.length === 0 && (
           <Text size={13} color={colors.textMuted} align="center" style={styles.empty}>
-            No vehicles yet — add one to start offering rides.
+            {t('transportVehicle.empty')}
           </Text>
         )}
       </View>
 
       <BottomSheet
         open={!!editing}
-        title={editing === 'new' ? 'Add vehicle' : 'Edit vehicle'}
+        title={editing === 'new' ? t('transportVehicle.addVehicle') : t('transportVehicle.editVehicle')}
         onClose={() => setEditing(null)}
         footer={
           <Button fullWidth size="lg" disabled={!form.plate.trim()} onPress={save}>
-            {editing === 'new' ? 'Add vehicle' : 'Save changes'}
+            {editing === 'new' ? t('transportVehicle.addVehicle') : t('transportVehicle.saveChanges')}
           </Button>
         }
       >
         <View style={{ gap: space[4] }}>
           <Select
-            label="Vehicle type"
+            label={t('transportVehicle.vehicleType')}
             value={form.type}
             onValueChange={(type) => setForm((f) => ({ ...f, type }))}
-            options={VEHICLE_TYPES}
+            options={vehicleTypeOptions}
           />
           <Input
-            label="Plate number"
+            label={t('transportVehicle.plateNumber')}
             value={form.plate}
             onChangeText={(plate) => setForm((f) => ({ ...f, plate }))}
-            placeholder="MH 02 AB 1234"
+            placeholder={t('transportVehicle.platePlaceholder')}
             leftIcon={<Icon name="hash" size={18} color={colors.textMuted} />}
           />
           <View>
             <Text size={fontSize.sm} weight={600} color={colors.textSecondary} style={{ marginBottom: 8 }}>
-              Pricing
+              {t('transportVehicle.pricing')}
             </Text>
             <View style={{ flexDirection: 'row', gap: 10 }}>
               <Chip
@@ -144,29 +156,29 @@ export default function TransportVehicles() {
                 accent="brand"
                 onPress={() => setForm((f) => ({ ...f, pricing: 'free' }))}
               >
-                Free
+                {t('transportVehicle.free')}
               </Chip>
               <Chip
                 selected={form.pricing === 'paid'}
                 accent="food"
                 onPress={() => setForm((f) => ({ ...f, pricing: 'paid' }))}
               >
-                Paid
+                {t('transportVehicle.paid')}
               </Chip>
             </View>
           </View>
           {form.pricing === 'paid' && (
             <Input
-              label="Fare"
+              label={t('transportVehicle.fare')}
               value={form.fare}
               onChangeText={(fare) => setForm((f) => ({ ...f, fare }))}
-              placeholder="e.g. ₹150"
+              placeholder={t('transportVehicle.farePlaceholder')}
               leftIcon={<Icon name="indian-rupee" size={18} color={colors.textMuted} />}
             />
           )}
           <View style={styles.availRow}>
             <Text variant="body" weight={600} style={{ flex: 1 }}>
-              Available now
+              {t('transportVehicle.availableNow')}
             </Text>
             <Switch
               checked={form.available}

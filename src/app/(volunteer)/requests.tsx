@@ -28,22 +28,24 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
 import { tierForPoints } from '@/config/rewards';
+import { useT } from '@/i18n/use-t';
 import { useApp } from '@/store/app-store';
 import { colors, radius, shadows, space } from '@/theme';
 import { callNumber } from '@/utils/contact';
 import { formatRelative } from '@/utils/datetime';
 import type { Consumer, OpenRequest, VolunteerTask } from '@/data/types';
 
-const ACTION_LABEL: Record<string, string> = {
-  accepted: 'Pick up',
-  picked_up: 'Deliver',
-  delivered: 'Complete',
+const ACTION_LABEL_KEY: Record<string, string> = {
+  accepted: 'volRequests.actionPickUp',
+  picked_up: 'volRequests.actionDeliver',
+  delivered: 'volRequests.actionComplete',
 };
 
 const grp = (n: number) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
 export default function VolHome() {
   const router = useRouter();
+  const t = useT();
   const s = useApp();
   const profile = s.profiles.volunteer;
 
@@ -71,7 +73,7 @@ export default function VolHome() {
     (r) => !activeIds.includes(r.id) && !s.declinedRequests.includes(r.id),
   );
   const activeTasks = s.volActive.filter((t) => t.current !== 'completed');
-  const tierName = tierForPoints(s.volRewards.lifetimePoints).name;
+  const tierName = t(`rewards.tier.${tierForPoints(s.volRewards.lifetimePoints).id}`);
 
   const openTask = (id: string) => {
     s.setVolTask(id);
@@ -86,7 +88,7 @@ export default function VolHome() {
         <Hero
           accent={colors.brand}
           accent2={colors.brandStrong}
-          eyebrow="Volunteer"
+          eyebrow={t('role.volunteer')}
           title={profile.name}
           right={
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -99,10 +101,12 @@ export default function VolHome() {
           <View style={styles.availRow}>
             <View>
               <Text size={15} weight={800} color="#fff">
-                {available ? 'Available' : 'Busy'}
+                {available ? t('volRequests.available') : t('volRequests.busy')}
               </Text>
               <Text size={12} color="#fff" style={{ opacity: 0.85 }}>
-                {available ? 'Receiving nearby requests' : 'Not receiving requests'}
+                {available
+                  ? t('volRequests.receivingRequests')
+                  : t('volRequests.notReceivingRequests')}
               </Text>
             </View>
             <Switch checked={available} onChange={setAvailable} />
@@ -113,7 +117,7 @@ export default function VolHome() {
       <View style={styles.statRow}>
         <StatCard
           value={grp(s.volRewards.deliveriesCompleted)}
-          label="Total trips"
+          label={t('volRequests.totalTrips')}
           accent="brand"
           icon={<Icon name="truck" size={20} color={colors.brandStrong} />}
         />
@@ -121,11 +125,11 @@ export default function VolHome() {
           style={{ flex: 1 }}
           onPress={() => router.push('/(volunteer)/rewards')}
           accessibilityRole="button"
-          accessibilityLabel="Open your rewards"
+          accessibilityLabel={t('volRequests.openRewards')}
         >
           <StatCard
             value={grp(s.volRewards.balance)}
-            label={`${tierName} · view rewards`}
+            label={t('volRequests.tierViewRewards', { tier: tierName })}
             accent="reward"
             icon={<Icon name="award" size={20} color={colors.reward} />}
           />
@@ -136,7 +140,7 @@ export default function VolHome() {
         <Pressable
           onPress={() => router.push('/(volunteer)/add-shelter')}
           accessibilityRole="button"
-          accessibilityLabel="Register a shelter or community"
+          accessibilityLabel={t('volRequests.registerShelter')}
           style={styles.addShelter}
         >
           <View style={styles.addShelterIcon}>
@@ -144,10 +148,10 @@ export default function VolHome() {
           </View>
           <View style={{ flex: 1 }}>
             <Text size={15} weight={700} color={colors.textPrimary}>
-              Register a shelter or community
+              {t('volRequests.registerShelter')}
             </Text>
             <Text size={12} color={colors.textMuted}>
-              Add a place that needs donations — with photos
+              {t('volRequests.registerShelterHint')}
             </Text>
           </View>
           <Icon name="chevron-right" size={20} color={colors.textMuted} />
@@ -155,14 +159,16 @@ export default function VolHome() {
 
         {addedShelters.length > 0 && (
           <>
-            <SectionHeader title={`Shelters you added · ${addedShelters.length}`} />
+            <SectionHeader
+              title={t('volRequests.sheltersAdded', { count: addedShelters.length })}
+            />
             <View style={{ gap: 10 }}>
               {addedShelters.map((c) => (
                 <Pressable
                   key={c.id}
                   onPress={() => setDetail(c)}
                   accessibilityRole="button"
-                  accessibilityLabel={`View ${c.name} details`}
+                  accessibilityLabel={t('volRequests.viewDetails', { name: c.name })}
                   style={styles.shelterRow}
                 >
                   <View style={styles.addShelterIcon}>
@@ -173,12 +179,14 @@ export default function VolHome() {
                       {c.name}
                     </Text>
                     <Text size={12} color={colors.textMuted}>
-                      {c.type} · {c.people} people
-                      {c.images && c.images.length > 0 ? ` · ${c.images.length} photos` : ''}
+                      {c.type} · {t('volRequests.peopleCount', { count: c.people })}
+                      {c.images && c.images.length > 0
+                        ? ` · ${t('volRequests.photosCount', { count: c.images.length })}`
+                        : ''}
                     </Text>
                     {c.addedAt != null && (
                       <Text size={11} color={colors.textMuted} style={{ marginTop: 1 }}>
-                        Added {formatRelative(c.addedAt)}
+                        {t('volRequests.addedAt', { time: formatRelative(c.addedAt) })}
                       </Text>
                     )}
                   </View>
@@ -189,13 +197,13 @@ export default function VolHome() {
           </>
         )}
 
-        <SectionHeader title={`Active tasks · ${activeTasks.length}`} />
+        <SectionHeader title={t('volRequests.activeTasks', { count: activeTasks.length })} />
         {activeTasks.length === 0 ? (
           <EmptyState
             compact
             icon="clipboard-list"
-            title="No active tasks"
-            message="Accept a nearby request and it'll show up here to pick up and deliver."
+            title={t('volRequests.noActiveTasksTitle')}
+            message={t('volRequests.noActiveTasksMessage')}
             accent="neutral"
           />
         ) : (
@@ -206,21 +214,27 @@ export default function VolHome() {
           </View>
         )}
 
-        <SectionHeader title={`Nearby requests${available ? ` · ${requests.length}` : ''}`} />
+        <SectionHeader
+          title={
+            available
+              ? t('volRequests.nearbyRequestsCount', { count: requests.length })
+              : t('volRequests.nearbyRequests')
+          }
+        />
         {!available ? (
           <EmptyState
             compact
             icon="moon"
-            title="You're offline"
-            message="Turn on availability to see nearby requests."
+            title={t('volRequests.offlineTitle')}
+            message={t('volRequests.offlineMessage')}
             accent="neutral"
           />
         ) : requests.length === 0 ? (
           <EmptyState
             compact
             icon="check-check"
-            title="All caught up"
-            message="No open requests near you right now."
+            title={t('volRequests.allCaughtUpTitle')}
+            message={t('volRequests.allCaughtUpMessage')}
           />
         ) : (
           <View style={{ gap: space[3] }}>
@@ -233,7 +247,7 @@ export default function VolHome() {
                 distance={r.distance}
                 people={r.people}
                 time={r.time}
-                acceptLabel="Review"
+                acceptLabel={t('volRequests.review')}
                 onAccept={() => setReview(r)}
                 onDecline={() => s.declineRequest(r.id)}
               />
@@ -244,16 +258,16 @@ export default function VolHome() {
 
       <BottomSheet
         open={!!review}
-        title="Review request"
+        title={t('volRequests.reviewRequest')}
         onClose={() => setReview(null)}
         footer={
           review && (
             <View style={{ gap: space[2] }}>
               <Button fullWidth size="lg" leftIcon="check" onPress={acceptReviewed}>
-                Accept request
+                {t('volRequests.acceptRequest')}
               </Button>
               <Button fullWidth variant="secondary" onPress={declineReviewed}>
-                Decline
+                {t('volRequests.decline')}
               </Button>
             </View>
           )
@@ -263,7 +277,7 @@ export default function VolHome() {
           <View style={{ gap: space[3] }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
               <StatusBadge tone={review.category === 'food' ? 'food' : 'clothes'} dot={false} size="sm">
-                {review.category === 'food' ? 'Food' : 'Clothes'}
+                {review.category === 'food' ? t('volRequests.food') : t('volRequests.clothes')}
               </StatusBadge>
               <Text variant="lg" weight={800} style={{ flex: 1 }} numberOfLines={2}>
                 {review.title}
@@ -271,11 +285,27 @@ export default function VolHome() {
             </View>
 
             <View>
-              <DetailRow icon="user" label="Donor" value={review.donor} />
-              <DetailRow icon="users" label="Need" value={`Serves ${review.people}`} />
-              <DetailRow icon="navigation" label="Distance" value={`${review.distance} km away`} />
-              <DetailRow icon="clock" label="Pickup window" value={review.time} />
-              <DetailRow icon="building-2" label="Deliver to" value={review.drop} />
+              <DetailRow icon="user" label={t('volRequests.labelDonor')} value={review.donor} />
+              <DetailRow
+                icon="users"
+                label={t('volRequests.labelNeed')}
+                value={t('volRequests.serves', { count: review.people })}
+              />
+              <DetailRow
+                icon="navigation"
+                label={t('volRequests.labelDistance')}
+                value={t('volRequests.kmAway', { distance: review.distance })}
+              />
+              <DetailRow
+                icon="clock"
+                label={t('volRequests.labelPickupWindow')}
+                value={review.time}
+              />
+              <DetailRow
+                icon="building-2"
+                label={t('volRequests.labelDeliverTo')}
+                value={review.drop}
+              />
             </View>
 
             <View style={{ flexDirection: 'row', gap: space[2] }}>
@@ -287,23 +317,23 @@ export default function VolHome() {
                   })
                 }
                 accessibilityRole="button"
-                accessibilityLabel={`Message ${review.donor}`}
+                accessibilityLabel={t('volRequests.messageName', { name: review.donor })}
                 style={[styles.reviewBtn, { backgroundColor: colors.surfaceSunken }]}
               >
                 <Icon name="message-circle" size={18} color={colors.textPrimary} />
                 <Text size={14} weight={700} color={colors.textPrimary}>
-                  Message
+                  {t('common.message')}
                 </Text>
               </PressableScale>
               <PressableScale
                 onPress={() => callNumber(s.data.DONORS[0]?.contact)}
                 accessibilityRole="button"
-                accessibilityLabel={`Call ${review.donor}`}
+                accessibilityLabel={t('volRequests.callName', { name: review.donor })}
                 style={[styles.reviewBtn, { backgroundColor: colors.brand }]}
               >
                 <Icon name="phone" size={18} color="#fff" />
                 <Text size={14} weight={700} color="#fff">
-                  Call
+                  {t('common.call')}
                 </Text>
               </PressableScale>
             </View>
@@ -329,10 +359,12 @@ export default function VolHome() {
 }
 
 function ActiveTaskRow({ task, onPress }: { task: VolunteerTask; onPress: () => void }) {
+  const t = useT();
   const isFood = task.category === 'food';
   const accent = isFood ? colors.food : colors.clothes;
   const soft = isFood ? colors.foodSoft : colors.clothesSoft;
-  const action = ACTION_LABEL[task.current] ?? 'Continue';
+  const actionKey = ACTION_LABEL_KEY[task.current];
+  const action = actionKey ? t(actionKey) : t('common.continue');
 
   return (
     <Pressable
@@ -350,7 +382,7 @@ function ActiveTaskRow({ task, onPress }: { task: VolunteerTask; onPress: () => 
         <View style={styles.taskMeta}>
           <StatusBadge status={task.current} size="sm" />
           <Text size={12} color={colors.textMuted}>
-            to {task.drop || 'recipient'}
+            {t('volRequests.toRecipient', { name: task.drop || t('volRequests.recipient') })}
           </Text>
         </View>
       </View>

@@ -15,12 +15,14 @@ import { Page } from '@/components/ui/page';
 import { PhotoPicker } from '@/components/ui/photo-picker';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Text } from '@/components/ui/text';
+import { useT } from '@/i18n/use-t';
 import { useApp } from '@/store/app-store';
 import { colors, radius, shadows, space } from '@/theme';
 
 export default function TransportVerify() {
   const router = useRouter();
   const s = useApp();
+  const t = useT();
   const v = s.transportVerification;
 
   const [fullName, setFullName] = useState(v.fullName);
@@ -43,29 +45,29 @@ export default function TransportVerify() {
   const statusBadge =
     v.status === 'verified' ? (
       <StatusBadge tone="success" dot={false}>
-        Verified
+        {t('transportVerify.statusVerified')}
       </StatusBadge>
     ) : v.status === 'pending' ? (
       <StatusBadge tone="warning" dot={false}>
-        Under review
+        {t('transportVerify.statusUnderReview')}
       </StatusBadge>
     ) : (
       <StatusBadge tone="neutral" dot={false}>
-        Not verified
+        {t('transportVerify.statusNotVerified')}
       </StatusBadge>
     );
 
   return (
     <Page
-      header={<AppBar title="Verification" onBack={() => router.back()} />}
+      header={<AppBar title={t('transportVerify.title')} onBack={() => router.back()} />}
       footer={
         v.status === 'verified' ? (
           <Button fullWidth size="lg" variant="secondary" onPress={() => router.back()}>
-            Done
+            {t('common.done')}
           </Button>
         ) : (
           <Button fullWidth size="lg" leftIcon="shield-check" disabled={!valid} onPress={submit}>
-            {v.status === 'pending' ? 'Resubmit' : 'Submit for verification'}
+            {v.status === 'pending' ? t('transportVerify.resubmit') : t('transportVerify.submit')}
           </Button>
         )
       }
@@ -79,52 +81,52 @@ export default function TransportVerify() {
         <View style={{ flex: 1 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <Text variant="body" weight={700}>
-              Account status
+              {t('transportVerify.accountStatus')}
             </Text>
             {statusBadge}
           </View>
           <Text variant="caption" color={colors.textSecondary} style={{ marginTop: 2, lineHeight: 17 }}>
             {v.status === 'verified'
-              ? 'You’re verified — donors and volunteers can trust your rides.'
+              ? t('transportVerify.bannerVerified')
               : v.status === 'pending'
-                ? 'Your details are under review. We’ll verify you shortly.'
-                : 'Verify your identity and licence to start offering rides.'}
+                ? t('transportVerify.bannerPending')
+                : t('transportVerify.bannerUnverified')}
           </Text>
         </View>
       </View>
 
       <View style={{ gap: space[4], marginTop: space[4] }}>
         <Input
-          label="Full name"
+          label={t('transportVerify.fullName')}
           required
           value={fullName}
           onChangeText={setFullName}
-          placeholder="As on your licence"
+          placeholder={t('transportVerify.fullNamePlaceholder')}
           leftIcon={<Icon name="user" size={18} color={colors.textMuted} />}
         />
         <Input
-          label="Driving licence number"
+          label={t('transportVerify.licenseNumber')}
           required
           value={license}
           onChangeText={setLicense}
-          placeholder="e.g. MH14 20110012345"
+          placeholder={t('transportVerify.licenseNumberPlaceholder')}
           autoCapitalize="characters"
           leftIcon={<Icon name="id-card" size={18} color={colors.textMuted} />}
         />
         <Input
-          label="Contact number"
+          label={t('transportVerify.contactNumber')}
           required
           value={contact}
           onChangeText={setContact}
-          placeholder="+91"
+          placeholder={t('transportVerify.contactNumberPlaceholder')}
           keyboardType="phone-pad"
           leftIcon={<Icon name="phone" size={18} color={colors.textMuted} />}
         />
         <View>
           <Text variant="sm" weight={600} color={colors.textSecondary} style={{ marginBottom: space[2] }}>
-            Driving licence photo
+            {t('transportVerify.licensePhoto')}
           </Text>
-          <PhotoPicker value={photo} onPick={setPhoto} size={120} label="Upload licence" />
+          <PhotoPicker value={photo} onPick={setPhoto} size={120} label={t('transportVerify.uploadLicense')} />
         </View>
       </View>
     </Page>

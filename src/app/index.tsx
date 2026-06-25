@@ -11,10 +11,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BrandMark } from '@/components/brand-mark';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
+import { useT } from '@/i18n/use-t';
 import { palette, radius, space } from '@/theme';
 
 export default function SplashScreen() {
   const router = useRouter();
+  const t = useT();
   const insets = useSafeAreaInsets();
 
   return (
@@ -33,7 +35,7 @@ export default function SplashScreen() {
           plenty
         </Text>
         <Text size={17} weight={500} color="#fff" align="center" style={styles.tagline}>
-          Share what&apos;s spare. A neighbour nearby needs it today.
+          {t('splash.tagline')}
         </Text>
       </View>
       <View style={[styles.footer, { bottom: insets.bottom + space[6] }]}>
@@ -45,7 +47,7 @@ export default function SplashScreen() {
           style={styles.cta}
         >
           <Text size={17} weight={700} color={palette.green600}>
-            Get started
+            {t('splash.getStarted')}
           </Text>
         </Button>
       </View>

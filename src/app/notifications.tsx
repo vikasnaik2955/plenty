@@ -12,11 +12,13 @@ import { AppBar } from '@/components/ui/app-bar';
 import { EmptyState } from '@/components/ui/empty-state';
 import { NotificationCard } from '@/components/ui/notification-card';
 import { Page } from '@/components/ui/page';
+import { useT } from '@/i18n/use-t';
 import { useApp } from '@/store/app-store';
 import { space } from '@/theme';
 import { formatRelative } from '@/utils/datetime';
 
 export default function NotificationsScreen() {
+  const t = useT();
   const router = useRouter();
   const s = useApp();
   const { markNotificationsRead } = s;
@@ -32,9 +34,9 @@ export default function NotificationsScreen() {
   }, [me, markNotificationsRead]);
 
   return (
-    <Page header={<AppBar title="Notifications" onBack={() => router.back()} />}>
+    <Page header={<AppBar title={t('notifications.title')} onBack={() => router.back()} />}>
       {list.length === 0 ? (
-        <EmptyState icon="bell-off" title="No notifications" message="You're all caught up." />
+        <EmptyState icon="bell-off" title={t('notifications.emptyTitle')} message={t('notifications.emptyMessage')} />
       ) : (
         <View style={{ gap: space[2] + 2 }}>
           {list.map((n) => (

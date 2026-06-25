@@ -16,18 +16,21 @@ import { Page } from '@/components/ui/page';
 import { Select } from '@/components/ui/select';
 import { Text } from '@/components/ui/text';
 import { Textarea } from '@/components/ui/textarea';
+import { useT } from '@/i18n/use-t';
 import { useApp } from '@/store/app-store';
 import { colors, radius, space } from '@/theme';
 
-const TYPE_OPTIONS = [
-  { value: 'Community shelter', label: 'Community shelter' },
-  { value: 'NGO', label: 'NGO' },
-  { value: 'Community kitchen', label: 'Community kitchen' },
-  { value: "Children's home", label: "Children's home" },
-  { value: 'Old age home', label: 'Old age home' },
-  { value: 'Orphanage', label: 'Orphanage' },
-  { value: 'Other', label: 'Other' },
-];
+// `value` is the stored shelter type (kept English so saved data is stable
+// across languages); only the visible `label` is translated per-render.
+const TYPE_KEYS = [
+  { value: 'Community shelter', key: 'addShelter.typeCommunityShelter' },
+  { value: 'NGO', key: 'addShelter.typeNGO' },
+  { value: 'Community kitchen', key: 'addShelter.typeCommunityKitchen' },
+  { value: "Children's home", key: 'addShelter.typeChildrensHome' },
+  { value: 'Old age home', key: 'addShelter.typeOldAgeHome' },
+  { value: 'Orphanage', key: 'addShelter.typeOrphanage' },
+  { value: 'Other', key: 'addShelter.typeOther' },
+] as const;
 
 // Stable, render-invariant leading icons + style. Creating these fresh on every
 // render churned each Input's child-element identity and (under Fabric) remounted
@@ -41,7 +44,10 @@ const FLEX_1 = { flex: 1 } as const;
 
 export function AddShelterScreen() {
   const router = useRouter();
+  const t = useT();
   const s = useApp();
+
+  const typeOptions = TYPE_KEYS.map((o) => ({ value: o.value, label: t(o.key) }));
 
   const [name, setName] = useState('');
   const [type, setType] = useState('Community shelter');
@@ -73,16 +79,16 @@ export function AddShelterScreen() {
 
   return (
     <Page
-      header={<AppBar title="Add a shelter or community" onBack={() => router.back()} />}
+      header={<AppBar title={t('addShelter.title')} onBack={() => router.back()} />}
       footer={
         <View style={{ gap: space[2] }}>
           {!valid && (
             <Text variant="caption" color={colors.textMuted} align="center">
-              Add a name, number of people, and location to save.
+              {t('addShelter.validationHint')}
             </Text>
           )}
           <Button fullWidth size="lg" disabled={!valid} onPress={save} leftIcon="building-2">
-            Save shelter
+            {t('addShelter.save')}
           </Button>
         </View>
       }
@@ -92,57 +98,57 @@ export function AddShelterScreen() {
           <Icon name="building-2" size={22} color={colors.clothes} />
         </View>
         <Text variant="body" color={colors.textSecondary} style={{ flex: 1, lineHeight: 15 * 1.45 }}>
-          Add a place that needs donations. Donors can then pick it as a recipient.
+          {t('addShelter.intro')}
         </Text>
       </View>
 
       <View style={{ gap: space[4] }}>
         <Input
-          label="Place / organization"
+          label={t('addShelter.placeLabel')}
           required
           value={name}
           onChangeText={setName}
-          placeholder="e.g. Hope Shelter"
+          placeholder={t('addShelter.placePlaceholder')}
           leftIcon={ICON_BUILDING}
         />
         <Select
-          label="Type"
+          label={t('addShelter.typeLabel')}
           required
           value={type}
           onValueChange={setType}
-          options={TYPE_OPTIONS}
+          options={typeOptions}
         />
         <View style={{ flexDirection: 'row', gap: space[3] }}>
           <Input
-            label="Number of people"
+            label={t('addShelter.peopleLabel')}
             required
             value={people}
             onChangeText={setPeople}
-            placeholder="e.g. 40"
+            placeholder={t('addShelter.peoplePlaceholder')}
             keyboardType="number-pad"
             leftIcon={ICON_USERS}
             containerStyle={FLEX_1}
           />
           <Input
-            label="Distance (km)"
+            label={t('addShelter.distanceLabel')}
             value={distance}
             onChangeText={setDistance}
-            placeholder="e.g. 2.4"
+            placeholder={t('addShelter.distancePlaceholder')}
             keyboardType="decimal-pad"
             leftIcon={ICON_NAV}
             containerStyle={FLEX_1}
           />
         </View>
         <Input
-          label="Address / location"
+          label={t('addShelter.addressLabel')}
           required
           value={address}
           onChangeText={setAddress}
-          placeholder="Street, area, landmark"
+          placeholder={t('addShelter.addressPlaceholder')}
           leftIcon={ICON_PIN}
         />
         <Input
-          label="Contact"
+          label={t('addShelter.contactLabel')}
           value={contact}
           onChangeText={setContact}
           placeholder="+91"
@@ -152,20 +158,20 @@ export function AddShelterScreen() {
 
         <View>
           <Text variant="sm" weight={600} color={colors.textSecondary} style={{ marginBottom: space[2] }}>
-            Location photos
+            {t('addShelter.locationPhotos')}
           </Text>
           <ShelterImagesPicker value={images} onChange={setImages} accent={colors.clothes} />
           <Text variant="caption" color={colors.textMuted} style={{ marginTop: space[2] }}>
-            Add a few photos of the place so donors and volunteers can recognise it.
+            {t('addShelter.photosHint')}
           </Text>
         </View>
 
         <Textarea
-          label="Notes for donors"
+          label={t('addShelter.notesLabel')}
           value={notes}
           onChangeText={setNotes}
           maxLength={140}
-          placeholder="Access hours, directions, what's needed most…"
+          placeholder={t('addShelter.notesPlaceholder')}
         />
       </View>
     </Page>

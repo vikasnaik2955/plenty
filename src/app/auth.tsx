@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Page } from '@/components/ui/page';
 import { Tabs } from '@/components/ui/tabs';
 import { Text } from '@/components/ui/text';
+import { useT } from '@/i18n/use-t';
 import { ROLE_HOME } from '@/navigation/navs';
 import { ROLES } from '@/navigation/roles-meta';
 import { useApp } from '@/store/app-store';
@@ -21,6 +22,7 @@ import { colors, radius, space } from '@/theme';
 
 export default function AuthScreen() {
   const router = useRouter();
+  const t = useT();
   const { pendingRole, setRole } = useApp();
   const [mode, setMode] = useState('login');
 
@@ -36,7 +38,7 @@ export default function AuthScreen() {
       header={<AppBar title="" onBack={() => router.back()} transparent />}
       footer={
         <Button fullWidth size="lg" onPress={submit}>
-          {mode === 'login' ? 'Log in' : 'Create account'}
+          {mode === 'login' ? t('auth.logIn') : t('auth.createAccount')}
         </Button>
       }
     >
@@ -45,7 +47,9 @@ export default function AuthScreen() {
           <Icon name={role.icon} size={28} color={role.accent} />
         </View>
         <Text variant="h2">
-          {mode === 'login' ? 'Welcome back' : `Join as ${role.label}`}
+          {mode === 'login'
+            ? t('auth.welcomeBack')
+            : t('auth.joinAs', { role: t(`role.${role.key}`) })}
         </Text>
       </View>
 
@@ -53,32 +57,32 @@ export default function AuthScreen() {
         active={mode}
         onChange={setMode}
         items={[
-          { key: 'login', label: 'Log in' },
-          { key: 'register', label: 'Register' },
+          { key: 'login', label: t('auth.logIn') },
+          { key: 'register', label: t('auth.register') },
         ]}
         style={{ marginBottom: space[4] }}
       />
 
       <View style={{ gap: space[4] }}>
         {mode === 'register' && (
-          <Input label="Full name" placeholder="Your name" leftIcon={<Icon name="user" size={18} color={colors.textMuted} />} />
+          <Input label={t('auth.fullName')} placeholder={t('auth.fullNamePlaceholder')} leftIcon={<Icon name="user" size={18} color={colors.textMuted} />} />
         )}
         <Input
-          label="Email"
+          label={t('auth.email')}
           keyboardType="email-address"
           autoCapitalize="none"
           defaultValue="asha@example.com"
           leftIcon={<Icon name="mail" size={18} color={colors.textMuted} />}
         />
         <Input
-          label="Password"
+          label={t('auth.password')}
           secureTextEntry
           defaultValue="password"
           leftIcon={<Icon name="lock" size={18} color={colors.textMuted} />}
         />
         {mode === 'register' && (
           <Input
-            label="Contact number"
+            label={t('auth.contactNumber')}
             placeholder="+91"
             keyboardType="phone-pad"
             leftIcon={<Icon name="phone" size={18} color={colors.textMuted} />}

@@ -4,6 +4,7 @@
  */
 import { type StyleProp, View, type ViewStyle } from 'react-native';
 
+import { useT } from '@/i18n/use-t';
 import { colors, fontSize, radius, shadows } from '@/theme';
 
 import { Avatar } from './avatar';
@@ -45,6 +46,7 @@ export function ConsumerCard({
   onPress,
   style,
 }: ConsumerCardProps) {
+  const t = useT();
   const info = (
     <>
       <Avatar name={name} accent="clothes" />
@@ -56,7 +58,7 @@ export function ConsumerCard({
           {needsMore && (
             <View style={{ backgroundColor: colors.foodSoft, borderRadius: radius.full, paddingHorizontal: 7, paddingVertical: 2 }}>
               <Text size={10} weight={800} color={colors.food}>
-                NEEDS MORE
+                {t('consumerCard.needsMore')}
               </Text>
             </View>
           )}
@@ -70,20 +72,22 @@ export function ConsumerCard({
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
             <Icon name="users" size={13} color={colors.textSecondary} />
             <Text size={fontSize.caption} color={colors.textSecondary}>
-              {people} people
+              {t('consumerCard.people', { count: people })}
             </Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
             <Icon name="map-pin" size={13} color={colors.textSecondary} />
             <Text size={fontSize.caption} color={colors.textSecondary}>
-              {distance} km
+              {t('consumerCard.km', { distance })}
             </Text>
           </View>
           {photoCount > 0 && (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
               <Icon name="image" size={13} color={colors.textSecondary} />
               <Text size={fontSize.caption} color={colors.textSecondary}>
-                {photoCount} {photoCount === 1 ? 'photo' : 'photos'}
+                {photoCount === 1
+                  ? t('consumerCard.photo', { count: photoCount })
+                  : t('consumerCard.photos', { count: photoCount })}
               </Text>
             </View>
           )}
@@ -91,7 +95,7 @@ export function ConsumerCard({
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
               <Icon name="gift" size={13} color={needsMore ? colors.food : colors.textSecondary} />
               <Text size={fontSize.caption} weight={needsMore ? 700 : 400} color={needsMore ? colors.food : colors.textSecondary}>
-                {monthCount} this month
+                {t('consumerCard.thisMonth', { count: monthCount })}
               </Text>
             </View>
           )}
@@ -123,7 +127,7 @@ export function ConsumerCard({
         <PressableScale
           onPress={onPress}
           accessibilityRole="button"
-          accessibilityLabel={`View ${name} details`}
+          accessibilityLabel={t('consumerCard.viewDetails', { name })}
           style={{ flex: 1, flexDirection: 'row', gap: 12, alignItems: 'center' }}
         >
           {info}
@@ -144,7 +148,7 @@ export function ConsumerCard({
         }}
       >
         <Text size={fontSize.sm} weight={700} color={selected ? '#fff' : colors.brandStrong}>
-          {selected ? 'Selected' : 'Select'}
+          {selected ? t('consumerCard.selected') : t('consumerCard.select')}
         </Text>
       </PressableScale>
     </View>

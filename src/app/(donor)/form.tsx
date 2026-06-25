@@ -20,34 +20,35 @@ import { Select } from '@/components/ui/select';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Text } from '@/components/ui/text';
 import { Textarea } from '@/components/ui/textarea';
+import { useT, type TFunction } from '@/i18n/use-t';
 import { useApp } from '@/store/app-store';
 import { colors, radius } from '@/theme';
 import { formatDateTime } from '@/utils/datetime';
 
 const OPTIONS = [
-  { val: true, icon: 'bike', title: 'Yes, send a volunteer', desc: 'A nearby volunteer collects and delivers it' },
-  { val: false, icon: 'hand', title: "No, I'll hand it over myself", desc: 'You drop it off or the recipient collects' },
+  { val: true, icon: 'bike', titleKey: 'donorForm.volYesTitle', descKey: 'donorForm.volYesDesc' },
+  { val: false, icon: 'hand', titleKey: 'donorForm.volNoTitle', descKey: 'donorForm.volNoDesc' },
 ];
 
 const FOOD_TYPES = [
-  { value: 'cooked', label: 'Cooked meal' },
-  { value: 'packaged', label: 'Packaged food' },
-  { value: 'raw', label: 'Raw ingredients' },
-  { value: 'bakery', label: 'Bakery & snacks' },
-  { value: 'fruits', label: 'Fruits & vegetables' },
-  { value: 'other', label: 'Other' },
+  { value: 'cooked', labelKey: 'donorForm.foodCooked' },
+  { value: 'packaged', labelKey: 'donorForm.foodPackaged' },
+  { value: 'raw', labelKey: 'donorForm.foodRaw' },
+  { value: 'bakery', labelKey: 'donorForm.foodBakery' },
+  { value: 'fruits', labelKey: 'donorForm.foodFruits' },
+  { value: 'other', labelKey: 'donorForm.typeOther' },
 ];
 const CLOTH_TYPES = [
-  { value: 'men', label: "Men's" },
-  { value: 'women', label: "Women's" },
-  { value: 'kids', label: 'Kids' },
-  { value: 'winter', label: 'Winter wear' },
-  { value: 'general', label: 'General' },
-  { value: 'other', label: 'Other' },
+  { value: 'men', labelKey: 'donorForm.clothMen' },
+  { value: 'women', labelKey: 'donorForm.clothWomen' },
+  { value: 'kids', labelKey: 'donorForm.clothKids' },
+  { value: 'winter', labelKey: 'donorForm.clothWinter' },
+  { value: 'general', labelKey: 'donorForm.clothGeneral' },
+  { value: 'other', labelKey: 'donorForm.typeOther' },
 ];
 const CONDITIONS = [
-  { value: 'new', label: 'New' },
-  { value: 'gently', label: 'Gently used' },
+  { value: 'new', labelKey: 'donorForm.condNew' },
+  { value: 'gently', labelKey: 'donorForm.condGently' },
 ];
 
 // Stable leading-icon elements (avoids per-render element churn under Fabric).
@@ -63,12 +64,15 @@ function defaultBestBefore(): Date {
 const ICON_TAG = <Icon name="tag" size={18} color={colors.textMuted} />;
 const FLEX_1 = { flex: 1 } as const;
 
-const labelOf = (opts: { value: string; label: string }[], v: string) =>
-  opts.find((o) => o.value === v)?.label ?? '';
+const labelOf = (opts: { value: string; labelKey: string }[], v: string, t: TFunction) => {
+  const key = opts.find((o) => o.value === v)?.labelKey;
+  return key ? t(key) : '';
+};
 
 export default function DonorForm() {
   const router = useRouter();
   const s = useApp();
+  const t = useT();
 
   const isFood = s.draft.category === 'food';
   const accent = isFood ? colors.food : colors.clothes;
@@ -96,18 +100,21 @@ export default function DonorForm() {
   const onContinue = () => {
     if (!ready) return;
     if (isFood) {
-      const t = foodType === 'other' ? foodOther.trim() || 'Food' : labelOf(FOOD_TYPES, foodType);
+      const title = foodType === 'other' ? foodOther.trim() || t('donorForm.foodFallback') : labelOf(FOOD_TYPES, foodType, t);
       s.setDraft({
-        title: t,
+        title,
         serves: parseInt(serves, 10) || undefined,
-        note: [foodDesc.trim(), `Best before ${formatDateTime(bestBefore.getTime())}`]
+        note: [foodDesc.trim(), t('donorForm.bestBeforeNote', { datetime: formatDateTime(bestBefore.getTime()) })]
           .filter(Boolean)
           .join(' · '),
       });
     } else {
-      const t = clothType === 'other' ? clothOther.trim() || 'Clothes' : `${labelOf(CLOTH_TYPES, clothType)} clothes`;
+      const title =
+        clothType === 'other'
+          ? clothOther.trim() || t('donorForm.clothesFallback')
+          : t('donorForm.clothesTitle', { type: labelOf(CLOTH_TYPES, clothType, t) });
       s.setDraft({
-        title: t,
+        title,
         pieces: quantity.trim() || undefined,
         note: clothDesc.trim() || undefined,
       });
@@ -119,11 +126,11 @@ export default function DonorForm() {
     <Page
       header={
         <AppBar
-          title={isFood ? 'Food details' : 'Clothes details'}
+          title={isFood ? t('donorForm.foodTitle') : t('donorForm.clothesDetailsTitle')}
           onBack={() => router.back()}
           action={
             <StatusBadge tone={isFood ? 'food' : 'clothes'} dot={false}>
-              {isFood ? 'Food' : 'Clothes'}
+              {isFood ? t('donorForm.foodBadge') : t('donorForm.clothesBadge')}
             </StatusBadge>
           }
         />
@@ -137,17 +144,19 @@ export default function DonorForm() {
           style={ready ? { backgroundColor: accent } : undefined}
         >
           {needsVolunteer == null
-            ? 'Choose a delivery option'
+            ? t('donorForm.chooseDeliveryOption')
             : !typeChosen
-              ? `Choose a ${isFood ? 'food' : 'clothing'} type`
-              : 'Find nearby recipients'}
+              ? isFood
+                ? t('donorForm.chooseFoodType')
+                : t('donorForm.chooseClothingType')
+              : t('donorForm.findRecipients')}
         </Button>
       }
     >
       <View style={{ gap: 16 }}>
         <View>
           <Text size={14} weight={600} color={colors.textSecondary} style={{ marginBottom: 8 }}>
-            Do you need a volunteer to pick up & deliver?{' '}
+            {t('donorForm.volunteerQuestion')}{' '}
             <Text size={14} weight={600} color={colors.error}>
               *
             </Text>
@@ -171,10 +180,10 @@ export default function DonorForm() {
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text size={15} weight={700} color={colors.textPrimary}>
-                      {opt.title}
+                      {t(opt.titleKey)}
                     </Text>
                     <Text size={12} color={colors.textMuted}>
-                      {opt.desc}
+                      {t(opt.descKey)}
                     </Text>
                   </View>
                   <View style={[styles.radio, { borderColor: on ? colors.brand : colors.borderStrong, backgroundColor: on ? colors.brand : 'transparent' }]}>
@@ -189,71 +198,71 @@ export default function DonorForm() {
         {isFood ? (
           <>
             <Input
-              label="How many people does it serve?"
+              label={t('donorForm.servesLabel')}
               keyboardType="number-pad"
-              placeholder="e.g. 12"
+              placeholder={t('donorForm.servesPlaceholder')}
               required
               value={serves}
               onChangeText={setServes}
               leftIcon={ICON_USERS}
             />
             <Select
-              label="Food type"
+              label={t('donorForm.foodTypeLabel')}
               required
-              placeholder="Choose…"
+              placeholder={t('donorForm.choosePlaceholder')}
               value={foodType}
               onValueChange={setFoodType}
-              options={FOOD_TYPES}
+              options={FOOD_TYPES.map((o) => ({ value: o.value, label: t(o.labelKey) }))}
             />
             {foodType === 'other' && (
               <Input
-                label="Other food type"
-                placeholder="Tell us what kind of food"
+                label={t('donorForm.otherFoodTypeLabel')}
+                placeholder={t('donorForm.otherFoodTypePlaceholder')}
                 value={foodOther}
                 onChangeText={setFoodOther}
                 leftIcon={ICON_TAG}
               />
             )}
             <DateTimeField
-              label="Best before"
-              hint="Food freshness window — when it should be delivered by"
+              label={t('donorForm.bestBeforeLabel')}
+              hint={t('donorForm.bestBeforeHint')}
               value={bestBefore}
               onChange={setBestBefore}
               minimumDate={new Date()}
               accent={accent}
             />
             <Textarea
-              label="Description"
+              label={t('donorForm.descriptionLabel')}
               maxLength={120}
               value={foodDesc}
               onChangeText={setFoodDesc}
-              placeholder="Veg biryani, freshly cooked, mildly spiced"
+              placeholder={t('donorForm.foodDescPlaceholder')}
             />
           </>
         ) : (
           <>
             <Select
-              label="Clothing type"
+              label={t('donorForm.clothTypeLabel')}
               required
-              placeholder="Choose…"
+              placeholder={t('donorForm.choosePlaceholder')}
               value={clothType}
               onValueChange={setClothType}
-              options={CLOTH_TYPES}
+              options={CLOTH_TYPES.map((o) => ({ value: o.value, label: t(o.labelKey) }))}
             />
             {clothType === 'other' && (
               <Input
-                label="Other clothing type"
-                placeholder="Tell us what kind of clothes"
+                label={t('donorForm.otherClothTypeLabel')}
+                placeholder={t('donorForm.otherClothTypePlaceholder')}
                 value={clothOther}
                 onChangeText={setClothOther}
                 leftIcon={ICON_TAG}
               />
             )}
             <View style={{ flexDirection: 'row', gap: 12 }}>
-              <Input label="Size range" placeholder="S–XL" value={sizeRange} onChangeText={setSizeRange} containerStyle={FLEX_1} />
+              <Input label={t('donorForm.sizeRangeLabel')} placeholder={t('donorForm.sizeRangePlaceholder')} value={sizeRange} onChangeText={setSizeRange} containerStyle={FLEX_1} />
               <Input
-                label="Quantity"
-                placeholder="3 bags"
+                label={t('donorForm.quantityLabel')}
+                placeholder={t('donorForm.quantityPlaceholder')}
                 value={quantity}
                 onChangeText={setQuantity}
                 containerStyle={FLEX_1}
@@ -261,26 +270,26 @@ export default function DonorForm() {
               />
             </View>
             <Select
-              label="Condition"
+              label={t('donorForm.conditionLabel')}
               required
-              placeholder="Choose…"
+              placeholder={t('donorForm.choosePlaceholder')}
               value={condition}
               onValueChange={setCondition}
-              options={CONDITIONS}
+              options={CONDITIONS.map((o) => ({ value: o.value, label: t(o.labelKey) }))}
             />
             <Textarea
-              label="Description"
+              label={t('donorForm.descriptionLabel')}
               maxLength={120}
               value={clothDesc}
               onChangeText={setClothDesc}
-              placeholder="Warm jackets, mixed sizes, freshly washed"
+              placeholder={t('donorForm.clothDescPlaceholder')}
             />
           </>
         )}
 
         <View>
           <Text size={14} weight={600} color={colors.textSecondary} style={{ marginBottom: 6 }}>
-            Pickup location
+            {t('donorForm.pickupLocation')}
           </Text>
           <View style={styles.pickup}>
             <Icon name="map-pin" size={18} color={accent} />
@@ -288,19 +297,19 @@ export default function DonorForm() {
               12 Carter Rd, Bandra West
             </Text>
             <Text size={12} weight={700} color={colors.brandStrong}>
-              Auto-detected
+              {t('donorForm.autoDetected')}
             </Text>
           </View>
         </View>
 
         <View>
           <Text size={14} weight={600} color={colors.textSecondary} style={{ marginBottom: 6 }}>
-            Photo evidence{' '}
+            {t('donorForm.photoEvidence')}{' '}
             <Text size={14} weight={600} color={colors.error}>
               *
             </Text>
           </Text>
-          <PhotoPicker value={photo} onPick={setPhoto} label="Add photo evidence" accent={accent} />
+          <PhotoPicker value={photo} onPick={setPhoto} label={t('donorForm.addPhotoEvidence')} accent={accent} />
         </View>
       </View>
     </Page>

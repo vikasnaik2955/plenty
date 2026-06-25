@@ -15,12 +15,14 @@ import { Page } from '@/components/ui/page';
 import { SectionHeader } from '@/components/ui/section-header';
 import { StatCard } from '@/components/ui/stat-card';
 import { Text } from '@/components/ui/text';
+import { useT } from '@/i18n/use-t';
 import { useApp } from '@/store/app-store';
 import { colors, palette, radius, space } from '@/theme';
 import { formatRelative } from '@/utils/datetime';
 
 export default function ConHome() {
   const router = useRouter();
+  const t = useT();
   const s = useApp();
   const p = s.profiles.consumer;
 
@@ -32,7 +34,7 @@ export default function ConHome() {
         <Hero
           accent={colors.clothes}
           accent2={palette.teal700}
-          eyebrow="Recipient"
+          eyebrow={t('conHome.recipient')}
           title={p.name}
           right={
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -44,25 +46,25 @@ export default function ConHome() {
           <View style={styles.needRow}>
             <View>
               <Text size={12} weight={600} color="#fff" style={{ opacity: 0.85 }}>
-                Current need
+                {t('conHome.currentNeed')}
               </Text>
               <Text size={17} weight={800} color="#fff">
-                Meals for 40 people
+                {t('conHome.needSummary', { count: 40 })}
               </Text>
               {s.needUpdatedAt != null && (
                 <Text size={11} weight={600} color="#fff" style={{ opacity: 0.85, marginTop: 2 }}>
-                  Updated {formatRelative(s.needUpdatedAt)}
+                  {t('conHome.updated', { time: formatRelative(s.needUpdatedAt) })}
                 </Text>
               )}
             </View>
             <Pressable
               onPress={() => router.push('/(consumer)/need')}
               accessibilityRole="button"
-              accessibilityLabel="Update current need"
+              accessibilityLabel={t('conHome.updateNeedA11y')}
               style={styles.updatePill}
             >
               <Text size={13} weight={700} color={palette.teal700}>
-                Update
+                {t('conHome.update')}
               </Text>
             </Pressable>
           </View>
@@ -70,12 +72,12 @@ export default function ConHome() {
       }
     >
       <View style={styles.stats}>
-        <StatCard value="214" label="Meals received" accent="food" icon={<Icon name="utensils" size={20} color={palette.orange600} />} />
-        <StatCard value="86" label="Items received" accent="clothes" icon={<Icon name="shirt" size={20} color={palette.teal600} />} />
+        <StatCard value="214" label={t('conHome.mealsReceived')} accent="food" icon={<Icon name="utensils" size={20} color={palette.orange600} />} />
+        <StatCard value="86" label={t('conHome.itemsReceived')} accent="clothes" icon={<Icon name="shirt" size={20} color={palette.teal600} />} />
       </View>
 
       <View style={styles.body}>
-        <SectionHeader title="Incoming donations" />
+        <SectionHeader title={t('conHome.incomingDonations')} />
         <View style={styles.list}>
           {s.data.CONSUMER_INCOMING.map((d) => (
             <DonationCard
@@ -83,7 +85,7 @@ export default function ConHome() {
               category={d.category}
               title={d.title}
               status={d.status}
-              time={`${d.eta} · from ${d.donor}`}
+              time={t('conHome.fromDonor', { value: d.eta, donor: d.donor })}
               meta={[]}
               onPress={() =>
                 router.push({
@@ -100,7 +102,7 @@ export default function ConHome() {
           ))}
         </View>
 
-        <SectionHeader title="Recently received" action="Reports" onAction={() => router.push('/(consumer)/reports')} />
+        <SectionHeader title={t('conHome.recentlyReceived')} action={t('conHome.reports')} onAction={() => router.push('/(consumer)/reports')} />
         <View style={styles.list}>
           {s.data.CONSUMER_RECEIVED.map((d) => (
             <DonationCard
@@ -108,7 +110,7 @@ export default function ConHome() {
               category={d.category}
               title={d.title}
               status="completed"
-              time={`${d.time} · from ${d.donor}`}
+              time={t('conHome.fromDonor', { value: d.time, donor: d.donor })}
               meta={[]}
             />
           ))}
