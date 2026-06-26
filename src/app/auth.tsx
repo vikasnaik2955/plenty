@@ -5,7 +5,7 @@
  */
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppBar } from '@/components/ui/app-bar';
 import { Button } from '@/components/ui/button';
@@ -89,6 +89,15 @@ export default function AuthScreen() {
           />
         )}
       </View>
+
+      <Pressable onPress={() => router.push('/legal')} style={{ marginTop: space[5] }} accessibilityRole="button">
+        <Text variant="caption" color={colors.textMuted} align="center">
+          {t('auth.legalPrefix')}{' '}
+          <Text variant="caption" weight={700} color={colors.brandStrong}>
+            {t('auth.legalLink')}
+          </Text>
+        </Text>
+      </Pressable>
     </Page>
   );
 }

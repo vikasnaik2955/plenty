@@ -358,4 +358,6 @@ export interface ChatMessage {
   at: number;
   /** True once the sender has edited it (messages can be edited, not deleted). */
   edited?: boolean;
+  /** Quoted message this one replies to (WhatsApp-style swipe-to-reply). */
+  replyTo?: { from: string; text: string };
 }

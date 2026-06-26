@@ -66,6 +66,8 @@ export default function RootLayout() {
                 <Stack.Screen name="addresses" />
                 <Stack.Screen name="language" />
                 <Stack.Screen name="help" />
+                <Stack.Screen name="legal" />
+                <Stack.Screen name="feedback" />
                 <Stack.Screen name="(donor)" options={{ animation: 'fade' }} />
                 <Stack.Screen name="(volunteer)" options={{ animation: 'fade' }} />
                 <Stack.Screen name="(consumer)" options={{ animation: 'fade' }} />

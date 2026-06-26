@@ -65,5 +65,22 @@
   "feedback.messageLabel": "Your feedback",
   "feedback.messagePlaceholder": "Describe the issue or share your idea…",
   "feedback.submit": "Send feedback",
-  "feedback.success": "Thanks! Your feedback was sent. 💚"
+  "feedback.success": "Thanks! Your feedback was sent. 💚",
+  "auth.legalPrefix": "By continuing you agree to our",
+  "auth.legalLink": "Terms & Safety policy",
+  "chat.safety": "Stay safe: meet in public, and never share OTPs, passwords or bank details. Plenty only connects you — verify before you hand over.",
+  "chat.replyingTo": "Replying to {name}",
+  "legal.title": "Safety & Trust",
+  "legal.helpSub": "Safety tips, our role & liability",
+  "legal.intro": "Plenty is a platform that connects donors, volunteers, transport partners and shelters to share surplus food and clothes. We help you coordinate — we never take custody of the donation itself.",
+  "legal.safetyTitle": "Stay safe",
+  "legal.tip1": "Meet and hand things over in safe, public places.",
+  "legal.tip2": "Never share OTPs, passwords, or bank / UPI details.",
+  "legal.tip3": "Verify the person and the donation before you hand it over.",
+  "legal.tip4": "Report anything suspicious to our support team.",
+  "legal.disclaimerTitle": "Our role & liability",
+  "legal.disclaimer": "Plenty is only a platform connecting givers, volunteers and recipients. We do not guarantee the safety, quality or conduct of any user, and are not responsible for any harm, loss or dispute arising from meetups, deliveries or handovers. Please use your judgement and take normal precautions.",
+  "legal.termsTitle": "Terms & Privacy",
+  "legal.termsBody": "By using Plenty you agree to use it lawfully and respectfully. We collect only what's needed to run the service and never sell your data.",
+  "legal.contactBtn": "Contact support"
 }

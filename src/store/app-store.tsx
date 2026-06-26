@@ -127,6 +127,8 @@ interface AppState {
   volRewards: VolRewards;
   /** Feedback submissions from any role (mock store; repository-ready). */
   feedback: FeedbackEntry[];
+  /** Whether the in-chat safety strip was dismissed (resets on logout). */
+  chatSafetyDismissed: boolean;
 }
 
 // The prototype shows 1,240 points and 38 people helped on the donor home.
@@ -259,6 +261,7 @@ function initialState(): AppState {
     pushEnabled: true,
     volRewards: seedVolRewards(),
     feedback: [],
+    chatSafetyDismissed: false,
   };
 }
 
@@ -318,6 +321,7 @@ type Action =
   | { type: 'COMPLETE_DONATION'; points: number; people: number }
   | { type: 'SET_VOL_REWARDS'; rewards: VolRewards }
   | { type: 'ADD_FEEDBACK'; entry: FeedbackEntry }
+  | { type: 'DISMISS_CHAT_SAFETY' }
   | { type: 'RESET' };
 
 function reducer(state: AppState, action: Action): AppState {
@@ -680,6 +684,8 @@ function reducer(state: AppState, action: Action): AppState {
       return { ...state, volRewards: action.rewards };
     case 'ADD_FEEDBACK':
       return { ...state, feedback: [action.entry, ...state.feedback] };
+    case 'DISMISS_CHAT_SAFETY':
+      return { ...state, chatSafetyDismissed: true };
     case 'RESET':
       return { ...initialState(), data: state.data };
     default:
@@ -734,9 +740,10 @@ export interface AppStore extends AppState {
   // feedback
   submitFeedback: (input: { categories: string[]; message: string; rating?: number }) => void;
   // chat
-  sendMessage: (from: string, to: string, text: string) => void;
+  sendMessage: (from: string, to: string, text: string, replyTo?: { from: string; text: string }) => void;
   editMessage: (me: string, other: string, messageId: string, text: string) => void;
   markThreadRead: (me: string, other: string) => void;
+  dismissChatSafety: () => void;
   // transport
   setTransportOnline: (online: boolean) => void;
   addVehicle: (v: Omit<TransportVehicle, 'id'>) => void;
@@ -1179,18 +1186,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [showToast, pushNotification, tr],
   );
 
-  const sendMessage = useCallback((from: string, to: string, text: string) => {
-    const body = text.trim();
-    if (!body || !from || !to) return;
-    const at = Date.now();
-    dispatch({
-      type: 'SEND_MESSAGE',
-      threadId: threadId(from, to),
-      message: { id: `msg-${idSeq.current++}`, from, text: body, at },
-      reader: from,
-      at,
-    });
-  }, []);
+  const sendMessage = useCallback(
+    (from: string, to: string, text: string, replyTo?: { from: string; text: string }) => {
+      const body = text.trim();
+      if (!body || !from || !to) return;
+      const at = Date.now();
+      dispatch({
+        type: 'SEND_MESSAGE',
+        threadId: threadId(from, to),
+        message: { id: `msg-${idSeq.current++}`, from, text: body, at, replyTo },
+        reader: from,
+        at,
+      });
+    },
+    [],
+  );
+
+  const dismissChatSafety = useCallback(() => dispatch({ type: 'DISMISS_CHAT_SAFETY' }), []);
 
   const markThreadRead = useCallback((me: string, other: string) => {
     if (!me || !other) return;
@@ -1405,6 +1417,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       sendMessage,
       editMessage,
       markThreadRead,
+      dismissChatSafety,
       setTransportOnline,
       addVehicle,
       updateVehicle,
@@ -1458,6 +1471,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       sendMessage,
       editMessage,
       markThreadRead,
+      dismissChatSafety,
       setTransportOnline,
       addVehicle,
       updateVehicle,

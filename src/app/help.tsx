@@ -55,6 +55,20 @@ export default function HelpScreen() {
       </View>
 
       <Text variant="sm" weight={800} style={styles.section}>
+        {t('legal.title')}
+      </Text>
+      <View style={styles.card}>
+        <ContactRow
+          icon="shield-check"
+          label={t('legal.title')}
+          sub={t('legal.helpSub')}
+          onPress={() => router.push('/legal')}
+          first
+          last
+        />
+      </View>
+
+      <Text variant="sm" weight={800} style={styles.section}>
         {t('help.faqHeading')}
       </Text>
       <View style={styles.card}>

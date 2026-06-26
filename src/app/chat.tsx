@@ -3,6 +3,9 @@
  * keyed by participant names, so a message sent from one role's account shows
  * up on the other person's account when you switch roles (WhatsApp-style, no
  * backend). The header Call button opens the dialer.
+ *
+ * WhatsApp-style touches: a dismissible safety strip, swipe-right-to-reply with
+ * a quoted preview, long-press-to-edit your own messages (never deletable).
  * Opened via `/chat?name=…&phone=…`.
  */
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -16,18 +19,20 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { Swipeable } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppBar } from '@/components/ui/app-bar';
 import { Avatar } from '@/components/ui/avatar';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
-import { useT } from '@/i18n/use-t';
+import { useT, type TFunction } from '@/i18n/use-t';
 import { useApp } from '@/store/app-store';
 import { colors, radius, space } from '@/theme';
 import { callNumber } from '@/utils/contact';
 import { threadId } from '@/utils/chat';
 import { dayKey, formatDayLabel, formatTime } from '@/utils/datetime';
+import type { ChatMessage } from '@/data/types';
 
 export default function ChatScreen() {
   const t = useT();
@@ -44,23 +49,21 @@ export default function ChatScreen() {
   const messages = s.threads[tid] ?? [];
 
   const scrollRef = useRef<ScrollView>(null);
+  const inputRef = useRef<TextInput>(null);
   const [text, setText] = useState('');
   // Id of the message being edited (messages can be edited, never deleted).
   const [editingId, setEditingId] = useState<string | null>(null);
-  // Height the keyboard currently covers — drives the input lift so it sits
-  // flush on top of the keyboard (WhatsApp-style), with no gap.
+  // Message being replied to (swipe-to-reply).
+  const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
   const [kbHeight, setKbHeight] = useState(0);
 
   const scrollToEnd = () =>
     requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated: true }));
 
-  // Mark the thread read whenever it's open or a new message arrives.
-  // (Stable callback — depending on the whole store here would loop.)
   useEffect(() => {
     markThreadRead(me, other);
   }, [me, other, messages.length, markThreadRead]);
 
-  // Track the keyboard height and keep the latest message visible.
   useEffect(() => {
     const showEvt = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
     const hideEvt = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
@@ -76,9 +79,6 @@ export default function ChatScreen() {
   }, []);
 
   const keyboardOpen = kbHeight > 0;
-  // Space below the input bar: the keyboard height while it's open, otherwise
-  // the bottom safe-area inset. A spacer this tall lifts the input to sit flush
-  // on the keyboard with no gap.
   const bottomSpace = keyboardOpen ? kbHeight : insets.bottom;
 
   const send = () => {
@@ -87,19 +87,29 @@ export default function ChatScreen() {
       editMessage(me, other, editingId, text);
       setEditingId(null);
     } else {
-      sendMessage(me, other, text);
+      const reply = replyingTo
+        ? { from: replyingTo.from === me ? t('chat.you') : replyingTo.from, text: replyingTo.text }
+        : undefined;
+      sendMessage(me, other, text, reply);
+      setReplyingTo(null);
     }
     setText('');
     scrollToEnd();
   };
 
-  const startEdit = (id: string, value: string) => {
-    setEditingId(id);
-    setText(value);
+  const startEdit = (m: ChatMessage) => {
+    setReplyingTo(null);
+    setEditingId(m.id);
+    setText(m.text);
   };
   const cancelEdit = () => {
     setEditingId(null);
     setText('');
+  };
+  const startReply = (m: ChatMessage) => {
+    setEditingId(null);
+    setReplyingTo(m);
+    inputRef.current?.focus();
   };
 
   return (
@@ -122,6 +132,18 @@ export default function ChatScreen() {
         }
       />
 
+      {!s.chatSafetyDismissed && (
+        <View style={styles.safetyStrip}>
+          <Icon name="shield-check" size={16} color={colors.brandStrong} />
+          <Text size={11.5} weight={600} color={colors.textSecondary} style={{ flex: 1, lineHeight: 11.5 * 1.4 }}>
+            {t('chat.safety')}
+          </Text>
+          <Pressable onPress={s.dismissChatSafety} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('common.close')}>
+            <Icon name="x" size={15} color={colors.textMuted} />
+          </Pressable>
+        </View>
+      )}
+
       <View style={{ flex: 1 }}>
         <ScrollView
           ref={scrollRef}
@@ -138,7 +160,6 @@ export default function ChatScreen() {
             </View>
           )}
           {messages.map((m, i) => {
-            const mine = m.from === me;
             const showDay = i === 0 || dayKey(m.at) !== dayKey(messages[i - 1].at);
             return (
               <Fragment key={m.id}>
@@ -151,33 +172,28 @@ export default function ChatScreen() {
                     </View>
                   </View>
                 )}
-                <View style={[styles.row, { justifyContent: mine ? 'flex-end' : 'flex-start' }]}>
-                  {!mine && <Avatar name={other} size="sm" accent="brand" style={{ marginRight: 8 }} />}
-                  <Pressable
-                    onLongPress={mine ? () => startEdit(m.id, m.text) : undefined}
-                    delayLongPress={250}
-                    accessibilityLabel={mine ? t('chat.editMessage') : undefined}
-                    style={[styles.bubble, mine ? styles.mine : styles.theirs]}
-                  >
-                    <Text variant="body" color={mine ? '#fff' : colors.textPrimary}>
-                      {m.text}
-                    </Text>
-                    <View style={styles.metaRow}>
-                      {m.edited && (
-                        <Text size={10} color={mine ? 'rgba(255,255,255,0.75)' : colors.textMuted}>
-                          {t('chat.edited')} ·{' '}
-                        </Text>
-                      )}
-                      <Text size={10} color={mine ? 'rgba(255,255,255,0.75)' : colors.textMuted}>
-                        {formatTime(m.at)}
-                      </Text>
-                    </View>
-                  </Pressable>
-                </View>
+                <MessageRow m={m} me={me} other={other} t={t} onReply={startReply} onEdit={startEdit} />
               </Fragment>
             );
           })}
         </ScrollView>
+
+        {replyingTo && (
+          <View style={styles.replyBanner}>
+            <View style={styles.replyBar} />
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text size={12} weight={800} color={colors.brandStrong} numberOfLines={1}>
+                {t('chat.replyingTo', { name: replyingTo.from === me ? t('chat.you') : replyingTo.from })}
+              </Text>
+              <Text size={12} color={colors.textSecondary} numberOfLines={1}>
+                {replyingTo.text}
+              </Text>
+            </View>
+            <Pressable onPress={() => setReplyingTo(null)} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('common.close')}>
+              <Icon name="x" size={16} color={colors.textSecondary} />
+            </Pressable>
+          </View>
+        )}
 
         {editingId && (
           <View style={styles.editBanner}>
@@ -192,6 +208,7 @@ export default function ChatScreen() {
         )}
         <View style={styles.inputBar}>
           <TextInput
+            ref={inputRef}
             value={text}
             onChangeText={setText}
             placeholder={editingId ? t('chat.editPlaceholder') : t('chat.messagePlaceholder', { name: other })}
@@ -216,6 +233,78 @@ export default function ChatScreen() {
   );
 }
 
+/** One message row — swipe right to reply; long-press your own to edit. */
+function MessageRow({
+  m,
+  me,
+  other,
+  t,
+  onReply,
+  onEdit,
+}: {
+  m: ChatMessage;
+  me: string;
+  other: string;
+  t: TFunction;
+  onReply: (m: ChatMessage) => void;
+  onEdit: (m: ChatMessage) => void;
+}) {
+  const mine = m.from === me;
+  const swipeRef = useRef<Swipeable>(null);
+
+  return (
+    <View style={[styles.row, { justifyContent: mine ? 'flex-end' : 'flex-start' }]}>
+      {!mine && <Avatar name={other} size="sm" accent="brand" style={{ marginRight: 8 }} />}
+      <Swipeable
+        ref={swipeRef}
+        friction={2}
+        leftThreshold={36}
+        overshootLeft={false}
+        renderLeftActions={() => (
+          <View style={styles.replyAction}>
+            <Icon name="reply" size={18} color={colors.brandStrong} />
+          </View>
+        )}
+        onSwipeableWillOpen={() => {
+          onReply(m);
+          swipeRef.current?.close();
+        }}
+      >
+        <Pressable
+          onLongPress={mine ? () => onEdit(m) : undefined}
+          delayLongPress={250}
+          accessibilityLabel={mine ? t('chat.editMessage') : undefined}
+          style={[styles.bubble, mine ? styles.mine : styles.theirs]}
+        >
+          {m.replyTo && (
+            <View style={[styles.quote, mine ? styles.quoteMine : styles.quoteTheirs]}>
+              <Text size={11} weight={800} color={mine ? '#fff' : colors.brandStrong} numberOfLines={1}>
+                {m.replyTo.from}
+              </Text>
+              <Text size={12} color={mine ? 'rgba(255,255,255,0.85)' : colors.textSecondary} numberOfLines={1}>
+                {m.replyTo.text}
+              </Text>
+            </View>
+          )}
+          <Text variant="body" color={mine ? '#fff' : colors.textPrimary}>
+            {m.text}
+          </Text>
+          <View style={styles.metaRow}>
+            {m.edited && (
+              <Text size={10} color={mine ? 'rgba(255,255,255,0.75)' : colors.textMuted}>
+                {t('chat.edited')} ·{' '}
+              </Text>
+            )}
+            <Text size={10} color={mine ? 'rgba(255,255,255,0.75)' : colors.textMuted}>
+              {formatTime(m.at)}
+            </Text>
+          </View>
+        </Pressable>
+      </Swipeable>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   callBtn: {
     width: 40,
@@ -224,6 +313,16 @@ const styles = StyleSheet.create({
     backgroundColor: colors.brand,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  safetyStrip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[2],
+    paddingHorizontal: space[4],
+    paddingVertical: space[2] + 1,
+    backgroundColor: colors.brandSoft,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderSubtle,
   },
   row: { flexDirection: 'row', alignItems: 'flex-end' },
   daySepRow: { alignItems: 'center', marginVertical: space[2] },
@@ -234,6 +333,18 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceSunken,
   },
   metaRow: { flexDirection: 'row', alignItems: 'center', marginTop: 3, alignSelf: 'flex-end' },
+  replyAction: { width: 56, alignItems: 'center', justifyContent: 'center' },
+  replyBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[2],
+    paddingHorizontal: space[4],
+    paddingVertical: space[2],
+    backgroundColor: colors.surfaceSunken,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderSubtle,
+  },
+  replyBar: { width: 3, alignSelf: 'stretch', minHeight: 28, backgroundColor: colors.brand, borderRadius: 2 },
   editBanner: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -252,6 +363,16 @@ const styles = StyleSheet.create({
     borderColor: colors.borderSubtle,
     borderBottomLeftRadius: 4,
   },
+  quote: {
+    borderLeftWidth: 3,
+    borderRadius: 6,
+    paddingLeft: 8,
+    paddingRight: 8,
+    paddingVertical: 4,
+    marginBottom: 5,
+  },
+  quoteMine: { backgroundColor: 'rgba(255,255,255,0.18)', borderLeftColor: 'rgba(255,255,255,0.9)' },
+  quoteTheirs: { backgroundColor: colors.surfaceSunken, borderLeftColor: colors.brand },
   inputBar: {
     flexDirection: 'row',
     alignItems: 'flex-end',
